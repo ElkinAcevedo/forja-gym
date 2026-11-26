@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { WEEKDAY_LETTERS, WEEKDAY_NAMES } from '@/domain/dates';
-import { color, font, radius, space } from '@/theme';
+import { color, radius, space } from '@/theme';
 
 export type WeekStripDay = {
   /** Número del día del mes; si falta, solo se muestra la inicial. */

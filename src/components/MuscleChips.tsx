@@ -23,5 +23,5 @@ export function MuscleChips({ primary, secondary }: MuscleSet<MuscleId>) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2 },
 });
