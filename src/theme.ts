@@ -9,7 +9,9 @@ export const color = {
   accent: '#C8F135', // Lima: lo activo y lo que sube
   accentSoft: 'rgba(200,241,53,.14)', // chips de músculo, series confirmadas
   muscleSecondary: 'rgba(200,241,53,.42)',
-  muscleOff: '#353B47',
+  muscleOff: '#353B47', // músculo no trabajado
+  bodyBase: '#262B35', // silueta del mapa muscular
+  thumbBg: '#1B1F27', // fondo de las miniaturas de ejercicio
   heroBg: '#1A2011', // tarjeta destacada (tono plano del degradado del mockup)
   heroBorder: '#3A4A14',
   surface1: '#16191F', // tarjetas
@@ -39,6 +41,14 @@ export const size = {
   touch: 44,
 } as const;
 
-export const radius = { card: 22, button: 16, control: 14, small: 12, pill: 99 } as const;
+export const radius = {
+  card: 22,
+  button: 16,
+  control: 14,
+  thumb: 16,
+  small: 12,
+  badge: 8,
+  pill: 99,
+} as const;
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, screen: 18, gap: 10 } as const;

@@ -1,0 +1,39 @@
+import Svg, { G } from 'react-native-svg';
+
+import type { EquipmentId } from '@/db/seed/equipment';
+
+import { Shape, type ShapeData } from './svg/Shape';
+
+/** Íconos de trazo del mockup, en un lienzo de 24 × 24. */
+const ICONS: Record<EquipmentId, ShapeData[]> = {
+  barra: [{ kind: 'path', d: 'M2 12h20M5 8v8M8 6v12M16 6v12M19 8v8' }],
+  mancuernas: [{ kind: 'path', d: 'M8 12h8M5 8v8M8 7v10M16 7v10M19 8v8' }],
+  maquina: [
+    { kind: 'rect', x: 4, y: 3, width: 4, height: 18, rx: 1 },
+    { kind: 'path', d: 'M8 7h11M8 12h7M15 12v8M11 20h9' },
+  ],
+  polea: [
+    { kind: 'path', d: 'M5 3h14M12 3v3' },
+    { kind: 'circle', cx: 12, cy: 8.5, r: 2.5 },
+    { kind: 'path', d: 'M12 11v7M8.5 18h7' },
+  ],
+  corporal: [
+    { kind: 'circle', cx: 12, cy: 4.5, r: 2 },
+    { kind: 'path', d: 'M12 7v7M7 10h10M12 14l-3 6M12 14l3 6' },
+  ],
+};
+
+type Props = { equipment: EquipmentId; size: number; color: string };
+
+/** Ícono del tipo de equipo (barra, mancuernas, máquina, polea, peso corporal). */
+export function EquipmentIcon({ equipment, size, color }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <G fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        {ICONS[equipment].map((shape, i) => (
+          <Shape key={i} shape={shape} />
+        ))}
+      </G>
+    </Svg>
+  );
+}

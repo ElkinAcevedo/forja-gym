@@ -11,7 +11,7 @@ import * as schema from '../schema';
 import { ACHIEVEMENTS } from './achievements';
 import { buildAssistantOptions, DAYS_PER_WEEK } from './assistant';
 import { EQUIPMENT } from './equipment';
-import { EXERCISES, type ExerciseSeed } from './exercises';
+import { EXERCISE_LIST } from './exercises';
 import { MUSCLES } from './muscles';
 import { DAY_TEMPLATES, PROGRAMS, PROGRESSION_TIPS } from './templates';
 import { LEVEL_STANDARDS, REP_SCHEMES } from './training';
@@ -74,7 +74,7 @@ export function seedCatalog(db: Database): boolean {
     );
     upsert(schema.equipment, [...EQUIPMENT], schema.equipment.id);
 
-    const exercises: readonly ExerciseSeed[] = EXERCISES;
+    const exercises = EXERCISE_LIST;
     upsert(
       schema.exercise,
       exercises.map((e) => ({

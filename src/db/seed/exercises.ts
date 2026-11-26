@@ -43,3 +43,13 @@ export const EXERCISES = [
 ] as const satisfies readonly ExerciseSeed[];
 
 export type ExerciseId = (typeof EXERCISES)[number]['id'];
+
+/** Los mismos ejercicios con tipos generales, para filtrar y buscar sin conversiones. */
+export const EXERCISE_LIST: readonly ExerciseSeed[] = EXERCISES;
+
+/** Ejercicio por id. Lanza un error si no existe: indica un dato roto en el catálogo. */
+export function exerciseById(id: ExerciseId): ExerciseSeed {
+  const found = EXERCISE_LIST.find((e) => e.id === id);
+  if (!found) throw new Error(`Ejercicio no encontrado en el catálogo: ${id}`);
+  return found;
+}
