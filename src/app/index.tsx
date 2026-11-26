@@ -36,10 +36,10 @@ export default function Index() {
           <Text style={styles.muted}>Serie 1</Text>
           <View style={styles.row}>
             <View style={styles.flex}>
-              <Stepper label="Peso" value={kg} onChange={setKg} step={2.5} unit="kg" done={done} />
+              <Stepper label="Peso" value={kg} onChange={setKg} step={2.5} max={500} decimals unit="kg" done={done} />
             </View>
             <View style={styles.flex}>
-              <Stepper label="Repeticiones" value={reps} onChange={setReps} step={1} done={done} />
+              <Stepper label="Repeticiones" value={reps} onChange={setReps} step={1} max={100} done={done} />
             </View>
           </View>
           <Button title={done ? 'Serie hecha ✓' : 'Confirmar serie'} onPress={() => setDone(!done)} />
