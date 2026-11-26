@@ -4,6 +4,7 @@ import * as schema from '@/db/schema';
 import type { EquipmentId } from '@/db/seed/equipment';
 import type { MuscleId } from '@/db/seed/muscles';
 import type { AppDatabase } from '@/db/types';
+import type { TrackingMode } from '@/domain/enums';
 
 /** Lo que la interfaz necesita para mostrar un ejercicio: nombre, equipo y músculos. */
 export type ExerciseCard = {
@@ -11,6 +12,8 @@ export type ExerciseCard = {
   name: string;
   equipmentId: EquipmentId;
   isCompound: boolean;
+  /** Qué se anota en cada serie: peso y reps, tiempo, distancia… */
+  tracking: TrackingMode;
   primary: MuscleId[];
   secondary: MuscleId[];
 };
@@ -43,6 +46,7 @@ export function getExerciseCards(db: AppDatabase, ids?: readonly string[]): Exer
       name: e.name,
       equipmentId: e.equipmentId as EquipmentId,
       isCompound: e.isCompound,
+      tracking: e.tracking,
       primary: byRole('primary'),
       secondary: byRole('secondary'),
     };

@@ -1,20 +1,24 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { color, font, radius, space } from '@/theme';
+import { color, font, space } from '@/theme';
 
 type Props = {
   label: string;
   value: string;
   /** Pinta el valor en lima, p. ej. cuando algo sube. */
   highlight?: boolean;
+  /** Valor más pequeño, para filas de tres casillas con textos largos. */
+  compact?: boolean;
 };
 
 /** Casilla con una cifra destacada y su etiqueta (sesiones, volumen, récords…). */
-export function StatTile({ label, value, highlight = false }: Props) {
+export function StatTile({ label, value, highlight = false, compact = false }: Props) {
   return (
     <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}`}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={[styles.value, highlight && styles.highlight]}>{value}</Text>
+      <Text style={[styles.value, compact && styles.compact, highlight && styles.highlight]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -31,5 +35,6 @@ const styles = StyleSheet.create({
   },
   label: { color: color.textMuted, fontSize: font.tiny },
   value: { color: color.text, fontSize: font.value, fontWeight: '700' },
+  compact: { fontSize: font.label },
   highlight: { color: color.accent },
 });

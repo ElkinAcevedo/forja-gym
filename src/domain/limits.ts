@@ -5,6 +5,10 @@
 export const LIMITS = {
   weightKg: { min: 0, max: 500, precision: 0.5 },
   reps: { min: 0, max: 100, precision: 1 },
+  /** Series por tiempo (plancha…): de 5 en 5 segundos, hasta 1 hora. */
+  durationS: { min: 0, max: 3600, precision: 5 },
+  /** Series por distancia (cardio…): de 10 en 10 metros, hasta 100 km. */
+  distanceM: { min: 0, max: 100000, precision: 10 },
   bodyWeightKg: { min: 30, max: 300, precision: 0.1 },
   heightCm: { min: 100, max: 250 },
   /** 0 = lunes … 6 = domingo */
