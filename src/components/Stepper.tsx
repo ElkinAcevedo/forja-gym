@@ -10,7 +10,7 @@ type Props = {
   step: number;
   min?: number;
   max: number;
-  decimals?: boolean; // teclado con decimales (kg) o solo enteros (reps)
+  precision?: number; // múltiplo permitido: 0.5 en kg, 1 en reps
   unit?: string;
   label: string; // para lectores de pantalla, p. ej. "Peso"
   done?: boolean; // serie confirmada
@@ -18,7 +18,7 @@ type Props = {
 
 const HOLD_EVERY = 90;
 
-export function Stepper({ value, onChange, step, min = 0, max, decimals = false, unit, label, done }: Props) {
+export function Stepper({ value, onChange, step, min = 0, max, precision = 1, unit, label, done }: Props) {
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [draft, setDraft] = useState<string | null>(null); // texto mientras se escribe
 
@@ -28,7 +28,7 @@ export function Stepper({ value, onChange, step, min = 0, max, decimals = false,
   };
   useEffect(() => stop, []);
 
-  const tap = (delta: number) => onChange(stepValue(value, delta, min, max));
+  const tap = (delta: number) => onChange(stepValue(value, delta, min, max, precision));
 
   // Mantener pulsado: repite desde el valor actual. Siempre detiene la repetición anterior,
   // así dos gestos seguidos nunca dejan un temporizador suelto.
@@ -36,13 +36,13 @@ export function Stepper({ value, onChange, step, min = 0, max, decimals = false,
     stop();
     let current = value;
     timer.current = setInterval(() => {
-      current = stepValue(current, delta, min, max);
+      current = stepValue(current, delta, min, max, precision);
       onChange(current);
     }, HOLD_EVERY);
   };
 
   const commit = () => {
-    const n = draft === null ? null : parseInput(draft, min, max, decimals);
+    const n = draft === null ? null : parseInput(draft, min, max, precision);
     if (n !== null) onChange(n);
     setDraft(null);
   };
@@ -58,7 +58,7 @@ export function Stepper({ value, onChange, step, min = 0, max, decimals = false,
           onChangeText={setDraft}
           onBlur={commit}
           onSubmitEditing={commit}
-          keyboardType={decimals ? 'decimal-pad' : 'number-pad'}
+          keyboardType={precision < 1 ? 'decimal-pad' : 'number-pad'}
           returnKeyType="done"
           selectTextOnFocus
           maxLength={6}
