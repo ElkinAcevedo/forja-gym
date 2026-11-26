@@ -47,8 +47,8 @@ export default function ComponentGallery() {
           <Text style={styles.caption}>Hoy · {PUSH_DAY.focus}</Text>
           <Text style={styles.heading}>{PUSH_DAY.name}</Text>
           <View style={styles.bodies}>
-            <BodyMap view="front" height={150} {...pushMuscles} />
-            <BodyMap view="back" height={150} {...pushMuscles} />
+            <BodyMap view="front" height={240} {...pushMuscles} />
+            <BodyMap view="back" height={240} {...pushMuscles} />
           </View>
           <View style={styles.row}>
             {pushMuscles.primary.map((id) => (
@@ -65,14 +65,14 @@ export default function ComponentGallery() {
           <View style={styles.bodies}>
             <BodyMap
               view="front"
-              height={165}
+              height={270}
               primary={muscle ? [muscle] : []}
               selected={muscle}
               onPressMuscle={toggleMuscle}
             />
             <BodyMap
               view="back"
-              height={165}
+              height={270}
               primary={muscle ? [muscle] : []}
               selected={muscle}
               onPressMuscle={toggleMuscle}

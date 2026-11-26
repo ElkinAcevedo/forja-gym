@@ -28,12 +28,12 @@ export function ExerciseThumb({ primary, secondary, equipment, size, active = fa
     <View
       style={[
         styles.box,
-        { width: size, height: size, padding: size * 0.06 },
+        { width: size, height: size, padding: size * 0.03 },
         active && styles.active,
       ]}>
       <BodyMap
         view={preferredView(primary)}
-        height={size * 0.88}
+        height={size * 0.94}
         primary={primary}
         secondary={secondary}
       />

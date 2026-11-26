@@ -1,6 +1,6 @@
 import { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 
-/** Figura SVG descrita como datos, para guardar dibujos (mapa muscular, íconos) sin JSX. */
+/** Figura SVG descrita como datos, para guardar dibujos (p. ej. íconos) sin JSX. */
 export type ShapeData =
   | { kind: 'circle'; cx: number; cy: number; r: number }
   | { kind: 'ellipse'; cx: number; cy: number; rx: number; ry: number }

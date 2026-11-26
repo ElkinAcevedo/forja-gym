@@ -4,8 +4,13 @@ import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
 import type { BodyView } from '@/domain/enums';
 import { color } from '@/theme';
 
-import { Shape } from '../svg/Shape';
-import { ABS_LINES, BODY_BASE, BODY_VIEWBOX, MUSCLE_SHAPES } from './bodyShapes';
+import {
+  BODY_OUTLINE,
+  BODY_VIEWBOX,
+  MIRROR_TRANSFORM,
+  MUSCLE_DRAWINGS,
+  type MuscleDrawing,
+} from './bodyShapes';
 
 type Props = {
   view: BodyView;
@@ -24,6 +29,10 @@ const VIEW_NAME: Record<BodyView, string> = { front: 'frontal', back: 'posterior
 
 const muscleName = (id: MuscleId) => MUSCLES.find((m) => m.id === id)?.name ?? id;
 
+/** Grosor de la línea que separa músculos vecinos y del borde del músculo seleccionado. */
+const SEPARATOR_WIDTH = 1.4;
+const SELECTED_WIDTH = 2.5;
+
 /** Lima con opacidad según las veces por semana: 1 vez = suave, 4 o más = pleno. */
 const heatFill = (times: number) => `rgba(200,241,53,${Math.min(0.25 + times * 0.2, 1)})`;
 
@@ -41,7 +50,7 @@ export function BodyMap({
   selected,
 }: Props) {
   const width = (height * BODY_VIEWBOX.width) / BODY_VIEWBOX.height;
-  const muscles = Object.entries(MUSCLE_SHAPES[view]) as [MuscleId, typeof BODY_BASE][];
+  const muscles = Object.entries(MUSCLE_DRAWINGS[view]) as [MuscleId, MuscleDrawing][];
 
   const fillOf = (id: MuscleId) => {
     if (primary.includes(id)) return color.accent;
@@ -68,31 +77,34 @@ export function BodyMap({
       accessibilityRole={onPressMuscle ? undefined : 'image'}
       accessibilityLabel={onPressMuscle ? undefined : summary}>
       <G fill={color.bodyBase}>
-        {BODY_BASE.map((shape, i) => (
-          <Shape key={i} shape={shape} />
-        ))}
+        <Path d={BODY_OUTLINE.head} />
+        <Path d={BODY_OUTLINE.rightHalf} />
+        <Path d={BODY_OUTLINE.rightHalf} transform={MIRROR_TRANSFORM} />
       </G>
 
-      {muscles.map(([id, shapes]) => (
-        <G
-          key={id}
-          fill={fillOf(id)}
-          stroke={selected === id ? color.text : undefined}
-          strokeWidth={selected === id ? 1.2 : undefined}
-          onPress={onPressMuscle ? () => onPressMuscle(id) : undefined}
-          accessible={!!onPressMuscle}
-          accessibilityRole={onPressMuscle ? 'button' : undefined}
-          accessibilityLabel={onPressMuscle ? muscleName(id) : undefined}
-          accessibilityState={onPressMuscle ? { selected: selected === id } : undefined}>
-          {shapes.map((shape, i) => (
-            <Shape key={i} shape={shape} />
-          ))}
-        </G>
-      ))}
-
-      {view === 'front' && (
-        <Path d={ABS_LINES} stroke={color.bg} strokeWidth={0.8} pointerEvents="none" />
-      )}
+      {muscles.map(([id, drawing]) => {
+        const isSelected = selected === id;
+        return (
+          <G
+            key={id}
+            fill={fillOf(id)}
+            stroke={isSelected ? color.text : color.bodyBase}
+            strokeWidth={isSelected ? SELECTED_WIDTH : SEPARATOR_WIDTH}
+            onPress={onPressMuscle ? () => onPressMuscle(id) : undefined}
+            accessible={!!onPressMuscle}
+            accessibilityRole={onPressMuscle ? 'button' : undefined}
+            accessibilityLabel={onPressMuscle ? muscleName(id) : undefined}
+            accessibilityState={onPressMuscle ? { selected: isSelected } : undefined}>
+            {drawing.paths.map((d) => (
+              <Path key={d} d={d} />
+            ))}
+            {drawing.mirrored &&
+              drawing.paths.map((d) => (
+                <Path key={`mirror-${d}`} d={d} transform={MIRROR_TRANSFORM} />
+              ))}
+          </G>
+        );
+      })}
     </Svg>
   );
 }

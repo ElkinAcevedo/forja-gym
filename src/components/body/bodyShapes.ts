@@ -1,82 +1,97 @@
 /**
- * Dibujo del cuerpo del mapa muscular (mockup aprobado), en un lienzo de 100 × 172.
- * Cada músculo es una lista de figuras; casi todos son pares izquierda/derecha.
+ * Dibujo del cuerpo del mapa muscular, en un lienzo de 200 × 400 con el eje en x = 100.
+ *
+ * Para que los dos lados sean siempre simétricos, solo se dibuja el lado derecho de cada
+ * músculo par (`mirrored: true`) y la app lo refleja para obtener el izquierdo.
+ * Los músculos del centro (abdominales, trapecio, lumbar) se dibujan completos.
  */
-import type { BodyView } from '@/domain/enums';
 import type { MuscleId } from '@/db/seed/muscles';
+import type { BodyView } from '@/domain/enums';
 
-import type { ShapeData } from '../svg/Shape';
+export const BODY_VIEWBOX = { width: 200, height: 400 } as const;
 
-export const BODY_VIEWBOX = { width: 100, height: 172 } as const;
+/** Transformación SVG que refleja un trazado sobre el eje central del cuerpo. */
+export const MIRROR_TRANSFORM = `translate(${BODY_VIEWBOX.width},0) scale(-1,1)`;
 
-const ellipse = (cx: number, cy: number, rx: number, ry: number): ShapeData => ({
-  kind: 'ellipse',
-  cx,
-  cy,
-  rx,
-  ry,
-});
-const circle = (cx: number, cy: number, r: number): ShapeData => ({ kind: 'circle', cx, cy, r });
-const rect = (x: number, y: number, width: number, height: number, rx: number): ShapeData => ({
-  kind: 'rect',
-  x,
-  y,
-  width,
-  height,
-  rx,
-});
-const path = (d: string): ShapeData => ({ kind: 'path', d });
+export type MuscleDrawing = { mirrored: boolean; paths: readonly string[] };
 
-/** Silueta neutra sobre la que se pintan los músculos: cabeza, cuello, manos, cadera, rodillas, pies. */
-export const BODY_BASE: ShapeData[] = [
-  circle(50, 13, 8.5),
-  rect(45.5, 20, 9, 8, 2),
-  circle(23.5, 86, 3.5),
-  circle(76.5, 86, 3.5),
-  path('M39 82H61L58 92L50 95L42 92Z'),
-  circle(43, 131.5, 3.5),
-  circle(57, 131.5, 3.5),
-  ellipse(43, 167, 4.5, 2.6),
-  ellipse(57, 167, 4.5, 2.6),
-];
+const side = (...paths: string[]): MuscleDrawing => ({ mirrored: true, paths });
+const center = (...paths: string[]): MuscleDrawing => ({ mirrored: false, paths });
 
-const shoulders = [ellipse(32, 37, 7, 6.5), ellipse(68, 37, 7, 6.5)];
-const upperArms = [ellipse(28, 52, 4.6, 9), ellipse(72, 52, 4.6, 9)];
-const forearms = [ellipse(25, 72, 4, 10), ellipse(75, 72, 4, 10)];
+/** Silueta neutra sobre la que se pintan los músculos. */
+export const BODY_OUTLINE = {
+  head: 'M100 6C113 6 120 17 120 30C120 44 111 52 100 52C89 52 80 44 80 30C80 17 87 6 100 6Z',
+  /** Lado derecho del cuerpo (cuello, torso, brazo, pierna); se refleja para el izquierdo. */
+  rightHalf:
+    'M100 50C104 50 108 52 109 58L110 64C118 68 130 70 140 74C152 78 158 88 159 102' +
+    'C160 118 158 140 159 160C162 182 166 206 167 230C170 240 170 252 166 262' +
+    'C163 268 157 266 156 258C155 250 156 240 154 232C150 214 146 196 144 180' +
+    'C142 166 140 148 138 132C137 150 136 170 134 188C136 200 140 212 140 226' +
+    'C142 252 138 280 132 304C130 312 130 318 132 326C134 346 130 366 124 382' +
+    'C124 388 130 392 128 396C122 400 110 400 106 396C104 388 108 380 106 370' +
+    'C102 352 102 334 104 318C104 300 102 270 101 240L100 236Z',
+} as const;
 
-/** Músculos visibles en cada vista. Hombros y antebrazos aparecen en las dos. */
-export const MUSCLE_SHAPES: Record<BodyView, Partial<Record<MuscleId, ShapeData[]>>> = {
+// Compartidos por las dos vistas: se ven igual de frente y de espalda.
+const deltoid = side(
+  'M140 76C151 78 158 88 158 102C158 112 154 120 148 124C144 112 138 100 130 90C132 82 135 78 140 76Z',
+);
+const upperArm = side(
+  'M146 128C153 128 157 138 157 150C157 162 153 170 148 172C143 170 140 160 140 148C140 138 142 130 146 128Z',
+);
+const forearm = side(
+  'M148 178C156 180 160 196 162 212C164 224 164 236 162 244C158 248 154 246 152 238C149 222 145 204 144 190C144 182 145 178 148 178Z',
+);
+
+/** Músculos visibles en cada vista. Hombros, antebrazos y gemelos aparecen en las dos. */
+export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDrawing>>> = {
   front: {
-    hombros: shoulders,
-    pecho: [
-      path('M38 32C44 30 49 31 49.3 34V49C44 52 39 50 37.5 46C36.5 41 36.5 36 38 32Z'),
-      path('M62 32C56 30 51 31 50.7 34V49C56 52 61 50 62.5 46C63.5 41 63.5 36 62 32Z'),
-    ],
-    biceps: upperArms,
-    antebrazos: forearms,
-    abs: [rect(43.5, 52, 13, 29, 4)],
-    oblicuos: [
-      path('M37.5 50L42.5 53V80L39 78C36.5 68 36.5 58 37.5 50Z'),
-      path('M62.5 50L57.5 53V80L61 78C63.5 68 63.5 58 62.5 50Z'),
-    ],
-    cuadriceps: [ellipse(42.5, 111, 7, 18), ellipse(57.5, 111, 7, 18)],
-    gemelos: [ellipse(43, 150, 4.3, 13), ellipse(57, 150, 4.3, 13)],
+    hombros: deltoid,
+    pecho: side('M102 82C112 76 126 78 132 86C138 94 140 104 134 112C126 120 112 120 102 114Z'),
+    biceps: upperArm,
+    antebrazos: forearm,
+    // Seis cuadros y la parte baja del abdomen.
+    abs: center(
+      'M88 120h11v17h-11Z',
+      'M101 120h11v17h-11Z',
+      'M88 140h11v17h-11Z',
+      'M101 140h11v17h-11Z',
+      'M88 160h11v18h-11Z',
+      'M101 160h11v18h-11Z',
+      'M89 181h10v18C95 204 92 198 89 192Z',
+      'M101 181h10v11C108 198 105 204 101 199Z',
+    ),
+    oblicuos: side(
+      'M115 120C124 118 132 122 134 130C134 150 133 170 130 186C126 194 118 198 115 194Z',
+    ),
+    // Cuádriceps: parte externa y la "gota" interna sobre la rodilla.
+    cuadriceps: side(
+      'M104 224C114 214 130 216 136 228C140 252 136 282 128 304C126 310 122 310 120 304C121 286 114 268 104 258Z',
+      'M103 262C113 270 121 288 119 302C116 312 106 312 103 304C101 292 101 276 103 262Z',
+    ),
+    gemelos: side(
+      'M108 324C116 318 126 322 128 336C130 352 126 368 120 378C116 382 110 380 108 372C105 356 105 338 108 324Z',
+    ),
   },
   back: {
-    trapecio: [path('M44 24H56L67 32L58 39L50 49L42 39L33 32Z')],
-    hombros: shoulders,
-    dorsales: [
-      path('M37 40L42 41L49.3 52V70L42 67C38 60 36 50 37 40Z'),
-      path('M63 40L58 41L50.7 52V70L58 67C62 60 64 50 63 40Z'),
-    ],
-    triceps: upperArms,
-    antebrazos: forearms,
-    lumbar: [rect(43, 70, 14, 12, 3)],
-    gluteos: [ellipse(44, 91, 7, 8.5), ellipse(56, 91, 7, 8.5)],
-    isquios: [ellipse(42.5, 116, 6.5, 15), ellipse(57.5, 116, 6.5, 15)],
-    gemelos: [ellipse(43, 147, 5, 12), ellipse(57, 147, 5, 12)],
+    trapecio: center(
+      'M100 54C108 60 120 68 134 74C126 84 114 94 106 110L100 122L94 110C86 94 74 84 66 74C80 68 92 60 100 54Z',
+    ),
+    hombros: deltoid,
+    dorsales: side(
+      'M108 124C116 112 126 100 137 98C141 114 139 136 131 154C124 166 114 172 106 172C104 156 104 138 108 124Z',
+    ),
+    triceps: upperArm,
+    antebrazos: forearm,
+    lumbar: center('M93 176C97 180 103 180 107 176L110 198C104 202 96 202 90 198Z'),
+    gluteos: side(
+      'M101 206C114 200 132 204 137 218C140 234 132 250 118 252C108 252 102 246 101 238Z',
+    ),
+    isquios: side(
+      'M104 258C116 254 132 256 136 266C138 284 132 302 124 312C116 314 108 312 106 304C102 288 102 272 104 258Z',
+    ),
+    gemelos: side(
+      'M107 320C118 314 130 320 132 336C134 352 128 366 120 374C114 376 108 368 106 356C104 344 104 330 107 320Z',
+    ),
   },
 };
-
-/** Líneas que marcan los cuadros del abdomen en la vista frontal. */
-export const ABS_LINES = 'M50 53v27M44 61h12M44 70h12';
