@@ -1,2 +1,5 @@
 # Mockup de referencia: se conserva tal como se aprobó
 docs/mockup.html
+
+# Migraciones generadas por drizzle-kit: no se editan a mano
+src/db/migrations/

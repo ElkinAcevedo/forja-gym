@@ -4,13 +4,14 @@ Reglas para que el código de FORJA sea fácil de leer, de cambiar y de crecer.
 
 ## Estructura
 
-| Carpeta           | Contiene                                    | Regla                                                  |
-| ----------------- | ------------------------------------------- | ------------------------------------------------------ |
-| `src/app/`        | Pantallas (rutas de Expo Router)            | Solo componen piezas; sin lógica de negocio            |
-| `src/components/` | Componentes de interfaz reutilizables       | Reciben datos por props; no acceden a la base de datos |
-| `src/hooks/`      | Lógica de interfaz reutilizable (`useAlgo`) | Un comportamiento por hook                             |
-| `src/domain/`     | Reglas del negocio: series, niveles, 1RM…   | Funciones puras, sin React Native, siempre con pruebas |
-| `src/theme.ts`    | Colores, tamaños, radios y espacios         | Única fuente de valores visuales                       |
+| Carpeta           | Contiene                                    | Regla                                                                                                          |
+| ----------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `src/app/`        | Pantallas (rutas de Expo Router)            | Solo componen piezas; sin lógica de negocio                                                                    |
+| `src/components/` | Componentes de interfaz reutilizables       | Reciben datos por props; no acceden a la base de datos                                                         |
+| `src/hooks/`      | Lógica de interfaz reutilizable (`useAlgo`) | Un comportamiento por hook                                                                                     |
+| `src/domain/`     | Reglas del negocio: series, niveles, 1RM…   | Funciones puras, sin React Native, siempre con pruebas                                                         |
+| `src/db/`         | Esquema de SQLite, cliente y migraciones    | El esquema se cambia en `schema/` y luego `npm run db:generate`; las migraciones generadas no se editan a mano |
+| `src/theme.ts`    | Colores, tamaños, radios y espacios         | Única fuente de valores visuales                                                                               |
 
 ## Nombres
 
