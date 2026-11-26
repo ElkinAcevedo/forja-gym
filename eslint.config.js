@@ -8,6 +8,6 @@ module.exports = defineConfig([
   // Último: desactiva reglas de estilo que chocan con Prettier y reporta el formato como error.
   prettierRecommended,
   {
-    ignores: ['dist/*', '.expo/*', 'expo-env.d.ts'],
+    ignores: ['dist/*', '.expo/*', 'expo-env.d.ts', 'src/db/migrations/*'],
   },
 ]);
