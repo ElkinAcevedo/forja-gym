@@ -29,13 +29,13 @@ El diseño de referencia está en [`docs/mockup.html`](docs/mockup.html): un moc
 
 ## Stack
 
-| Capa | Tecnología |
-| --- | --- |
-| App | [Expo](https://expo.dev) SDK 58 · React Native · TypeScript estricto |
-| Navegación | Expo Router |
-| Datos locales | SQLite + Drizzle ORM *(Fase 0)* |
-| Respaldo opcional | Supabase *(Fase 4)* |
-| Calidad | ESLint · `tsc` · GitHub Actions |
+| Capa              | Tecnología                                                           |
+| ----------------- | -------------------------------------------------------------------- |
+| App               | [Expo](https://expo.dev) SDK 58 · React Native · TypeScript estricto |
+| Navegación        | Expo Router                                                          |
+| Datos locales     | SQLite + Drizzle ORM _(Fase 0)_                                      |
+| Respaldo opcional | Supabase _(Fase 4)_                                                  |
+| Calidad           | ESLint · Prettier · Jest · GitHub Actions                            |
 
 ## Empezar
 
@@ -52,20 +52,27 @@ Escanea el código QR con Expo Go. El móvil y el ordenador tienen que estar en 
 
 ### Scripts
 
-| Comando | Qué hace |
-| --- | --- |
-| `npm start` | Arranca el servidor de desarrollo |
-| `npm run lint` | Revisa el código con ESLint |
-| `npm run typecheck` | Comprueba los tipos de TypeScript |
+| Comando             | Qué hace                                          |
+| ------------------- | ------------------------------------------------- |
+| `npm start`         | Arranca el servidor de desarrollo                 |
+| `npm run lint`      | Revisa el código y el formato (ESLint + Prettier) |
+| `npm run typecheck` | Comprueba los tipos de TypeScript                 |
+| `npm test`          | Ejecuta las pruebas con Jest                      |
+| `npm run format`    | Corrige el formato de todo el proyecto            |
 
 ## Estructura
 
 ```
 src/
-  app/        pantallas (cada archivo es una ruta de Expo Router)
-  theme.ts    tokens de diseño: colores, radios, espacios, tipografía
-docs/         mockup y documentación de diseño
+  app/          pantallas (cada archivo es una ruta de Expo Router)
+  components/   componentes de interfaz reutilizables
+  hooks/        lógica de interfaz reutilizable
+  domain/       reglas del negocio, funciones puras con pruebas
+  theme.ts      tokens de diseño: colores, tamaños, radios y espacios
+docs/           mockup y convenciones de código
 ```
+
+Las reglas de estilo, nombres, comentarios y Git están en [`docs/convenciones.md`](docs/convenciones.md).
 
 ## Diseño
 
