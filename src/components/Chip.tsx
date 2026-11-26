@@ -2,34 +2,54 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { color, font, radius } from '@/theme';
 
-// on: seleccionado · muscle: músculo principal · muted: músculo secundario
-type Variant = 'default' | 'on' | 'muscle' | 'muted';
+/**
+ * default: etiqueta neutra · selected: opción elegida
+ * primaryMuscle: músculo principal · secondaryMuscle: músculo secundario
+ */
+type Variant = 'default' | 'selected' | 'primaryMuscle' | 'secondaryMuscle';
 
-type Props = { label: string; variant?: Variant; onPress?: () => void };
+type Props = {
+  label: string;
+  variant?: Variant;
+  /** Si se pasa, el chip se comporta como botón seleccionable. */
+  onPress?: () => void;
+};
 
+/** Etiqueta en forma de píldora: músculos, filtros y opciones. */
 export function Chip({ label, variant = 'default', onPress }: Props) {
-  const v = variants[variant];
+  const isButton = onPress !== undefined;
+
   return (
     <Pressable
-      accessibilityRole={onPress ? 'button' : 'text'}
-      accessibilityState={onPress ? { selected: variant === 'on' } : undefined}
-      disabled={!onPress}
+      accessibilityRole={isButton ? 'button' : 'text'}
+      accessibilityState={isButton ? { selected: variant === 'selected' } : undefined}
+      disabled={!isButton}
       onPress={onPress}
       hitSlop={8}
-      style={[styles.base, { backgroundColor: v.bg, borderColor: v.border }]}>
-      <Text style={[styles.text, { color: v.text, fontWeight: variant === 'on' ? '600' : '400' }]}>{label}</Text>
+      style={[styles.base, styles[variant]]}>
+      <Text style={[styles.text, textStyle[variant]]}>{label}</Text>
     </Pressable>
   );
 }
 
-const variants: Record<Variant, { bg: string; border: string; text: string }> = {
-  default: { bg: color.surface2, border: color.line, text: color.text },
-  on: { bg: color.accent, border: color.accent, text: color.bg },
-  muscle: { bg: color.accentSoft, border: 'transparent', text: color.accent },
-  muted: { bg: 'transparent', border: color.line, text: color.textMuted },
-};
+const textStyle = {
+  default: { color: color.text },
+  selected: { color: color.bg, fontWeight: '600' },
+  primaryMuscle: { color: color.accent },
+  secondaryMuscle: { color: color.textMuted },
+} as const;
 
 const styles = StyleSheet.create({
-  base: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.pill, borderWidth: 1 },
-  text: { fontSize: font.xs },
+  base: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  default: { backgroundColor: color.surface2, borderColor: color.line },
+  selected: { backgroundColor: color.accent, borderColor: color.accent },
+  primaryMuscle: { backgroundColor: color.accentSoft, borderColor: 'transparent' },
+  secondaryMuscle: { backgroundColor: 'transparent', borderColor: color.line },
+  text: { fontSize: font.caption },
 });

@@ -1,63 +1,87 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { parseInput, stepValue } from '@/domain/numbers';
-import { color, radius } from '@/theme';
+import { useHoldRepeat } from '@/hooks/useHoldRepeat';
+import { color, font, radius, size } from '@/theme';
+
+const HOLD_DELAY_MS = 400; // tiempo pulsado antes de empezar a repetir
+const HOLD_INTERVAL_MS = 90; // velocidad de la repetición
 
 type Props = {
   value: number;
   onChange: (value: number) => void;
+  /** Lo que suma o resta cada toque de + / −. */
   step: number;
   min?: number;
   max: number;
-  precision?: number; // múltiplo permitido: 0.5 en kg, 1 en reps
+  /** Múltiplo permitido: 0.5 para kg, 1 para reps. Define también el teclado. */
+  precision?: number;
   unit?: string;
-  label: string; // para lectores de pantalla, p. ej. "Peso"
-  done?: boolean; // serie confirmada
+  /** Nombre para lectores de pantalla, p. ej. "Peso". */
+  label: string;
+  /** Serie confirmada: se tiñe de lima. */
+  done?: boolean;
 };
 
-const HOLD_EVERY = 90;
-
-export function Stepper({ value, onChange, step, min = 0, max, precision = 1, unit, label, done }: Props) {
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+/**
+ * Control numérico con botones − / + y el valor en el centro.
+ * - Toque corto: cambia un paso.
+ * - Mantener pulsado: repite el paso hasta soltar.
+ * - Tocar el número: abre el teclado numérico para escribir el valor.
+ */
+export function Stepper({
+  value,
+  onChange,
+  step,
+  min = 0,
+  max,
+  precision = 1,
+  unit,
+  label,
+  done,
+}: Props) {
+  const hold = useHoldRepeat(HOLD_INTERVAL_MS);
   const [draft, setDraft] = useState<string | null>(null); // texto mientras se escribe
 
-  const stop = () => {
-    if (timer.current) clearInterval(timer.current);
-    timer.current = null;
-  };
-  useEffect(() => stop, []);
+  const change = (from: number, delta: number) => stepValue(from, delta, min, max, precision);
 
-  const tap = (delta: number) => onChange(stepValue(value, delta, min, max, precision));
-
-  // Mantener pulsado: repite desde el valor actual. Siempre detiene la repetición anterior,
-  // así dos gestos seguidos nunca dejan un temporizador suelto.
-  const hold = (delta: number) => {
-    stop();
+  const startHold = (delta: number) => {
+    // Cuenta desde el valor del momento en que empieza el gesto, sin esperar a que la
+    // pantalla se actualice entre repeticiones.
     let current = value;
-    timer.current = setInterval(() => {
-      current = stepValue(current, delta, min, max, precision);
+    hold.start(() => {
+      current = change(current, delta);
       onChange(current);
-    }, HOLD_EVERY);
+    });
   };
 
-  const commit = () => {
-    const n = draft === null ? null : parseInput(draft, min, max, precision);
-    if (n !== null) onChange(n);
-    setDraft(null);
+  const commitDraft = () => {
+    const typed = draft === null ? null : parseInput(draft, min, max, precision);
+    if (typed !== null) onChange(typed);
+    setDraft(null); // si no es válido, vuelve a mostrar el valor anterior
   };
+
+  const amount = unit ? `${step} ${unit}` : `${step}`;
 
   return (
     <View style={[styles.box, done && styles.done]}>
-      <StepButton sign="−" label={`Restar ${step} ${unit ?? ''} a ${label}`} onTap={() => tap(-step)} onHold={() => hold(-step)} onRelease={stop} />
+      <StepButton
+        sign="−"
+        accessibilityLabel={`Restar ${amount} a ${label}`}
+        onTap={() => onChange(change(value, -step))}
+        onHold={() => startHold(-step)}
+        onRelease={hold.stop}
+      />
+
       <View style={styles.center}>
         <TextInput
           accessibilityLabel={label}
           value={draft ?? String(value)}
           onFocus={() => setDraft(String(value))}
           onChangeText={setDraft}
-          onBlur={commit}
-          onSubmitEditing={commit}
+          onBlur={commitDraft}
+          onSubmitEditing={commitDraft}
           keyboardType={precision < 1 ? 'decimal-pad' : 'number-pad'}
           returnKeyType="done"
           selectTextOnFocus
@@ -66,25 +90,38 @@ export function Stepper({ value, onChange, step, min = 0, max, precision = 1, un
         />
         {unit ? <Text style={styles.unit}>{unit}</Text> : null}
       </View>
-      <StepButton sign="+" label={`Sumar ${step} ${unit ?? ''} a ${label}`} onTap={() => tap(step)} onHold={() => hold(step)} onRelease={stop} />
+
+      <StepButton
+        sign="+"
+        accessibilityLabel={`Sumar ${amount} a ${label}`}
+        onTap={() => onChange(change(value, step))}
+        onHold={() => startHold(step)}
+        onRelease={hold.stop}
+      />
     </View>
   );
 }
 
-type StepButtonProps = { sign: string; label: string; onTap: () => void; onHold: () => void; onRelease: () => void };
+type StepButtonProps = {
+  sign: string;
+  accessibilityLabel: string;
+  onTap: () => void;
+  onHold: () => void;
+  onRelease: () => void;
+};
 
-function StepButton({ sign, label, onTap, onHold, onRelease }: StepButtonProps) {
+function StepButton({ sign, accessibilityLabel, onTap, onHold, onRelease }: StepButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       onPress={onTap}
       onLongPress={onHold}
-      delayLongPress={400}
+      delayLongPress={HOLD_DELAY_MS}
       onPressOut={onRelease}
       hitSlop={6}
-      style={styles.btn}>
-      {({ pressed }) => <Text style={[styles.sign, pressed && { color: color.accent }]}>{sign}</Text>}
+      style={styles.button}>
+      {({ pressed }) => <Text style={[styles.sign, pressed && styles.signPressed]}>{sign}</Text>}
     </Pressable>
   );
 }
@@ -93,16 +130,24 @@ const styles = StyleSheet.create({
   box: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
+    height: size.control,
     backgroundColor: color.surface2,
     borderRadius: radius.control,
     borderWidth: 1,
     borderColor: color.line,
   },
   done: { backgroundColor: color.accentSoft, borderColor: 'transparent' },
-  btn: { width: 44, height: '100%', alignItems: 'center', justifyContent: 'center' },
-  sign: { fontSize: 22, color: color.textMuted },
+  button: { width: size.touch, height: '100%', alignItems: 'center', justifyContent: 'center' },
+  sign: { fontSize: font.heading, color: color.textMuted },
+  signPressed: { color: color.accent },
   center: { flex: 1, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' },
-  value: { minWidth: 24, padding: 0, textAlign: 'center', fontSize: 19, fontWeight: '700', color: color.text },
-  unit: { marginLeft: 2, fontSize: 11, fontWeight: '500', color: color.textMuted },
+  value: {
+    minWidth: 24,
+    padding: 0,
+    textAlign: 'center',
+    fontSize: font.value,
+    fontWeight: '700',
+    color: color.text,
+  },
+  unit: { marginLeft: 2, fontSize: font.tiny, fontWeight: '500', color: color.textMuted },
 });

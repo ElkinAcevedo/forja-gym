@@ -1,17 +1,26 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { color, font, radius } from '@/theme';
+import { color, font, radius, size } from '@/theme';
 
 type Props = {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost';
-  size?: 'md' | 'sm';
+  /** primary: acción principal en lima · secondary: acción secundaria en gris. */
+  variant?: 'primary' | 'secondary';
+  size?: 'regular' | 'small';
   disabled?: boolean;
 };
 
-export function Button({ title, onPress, variant = 'primary', size = 'md', disabled }: Props) {
-  const ghost = variant === 'ghost';
+/** Botón de texto a todo el ancho disponible. */
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  size: buttonSize = 'regular',
+  disabled = false,
+}: Props) {
+  const isSmall = buttonSize === 'small';
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,22 +29,34 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        size === 'sm' && styles.sm,
-        ghost ? styles.ghost : styles.primary,
-        (pressed || disabled) && { opacity: disabled ? 0.4 : 0.8 },
+        isSmall && styles.small,
+        styles[variant],
+        pressed && styles.pressed,
+        disabled && styles.disabled,
       ]}>
-      <Text style={[styles.text, size === 'sm' && styles.textSm, { color: ghost ? color.text : color.bg }]}>
-        {title}
-      </Text>
+      <Text style={[styles.text, isSmall && styles.textSmall, textColor[variant]]}>{title}</Text>
     </Pressable>
   );
 }
 
+const textColor = {
+  primary: { color: color.bg },
+  secondary: { color: color.text },
+} as const;
+
 const styles = StyleSheet.create({
-  base: { height: 52, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
-  sm: { height: 44, borderRadius: 12 },
+  base: {
+    height: size.button,
+    borderRadius: radius.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  small: { height: size.buttonSmall, borderRadius: radius.small },
   primary: { backgroundColor: color.accent },
-  ghost: { backgroundColor: color.surface2, borderWidth: 1, borderColor: color.line },
-  text: { fontSize: font.md, fontWeight: '700' },
-  textSm: { fontSize: font.sm },
+  secondary: { backgroundColor: color.surface2, borderWidth: 1, borderColor: color.line },
+  pressed: { opacity: 0.8 },
+  disabled: { opacity: 0.4 },
+  text: { fontSize: font.body, fontWeight: '700' },
+  textSmall: { fontSize: font.label },
 });
