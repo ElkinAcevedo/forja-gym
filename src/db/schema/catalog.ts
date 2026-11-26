@@ -7,6 +7,7 @@
  */
 import { check, integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+import type { AchievementRule } from '../../domain/achievements';
 import { BODY_VIEWS, MUSCLE_ROLES, TRACKING_MODES, TRAINING_GOALS } from '../../domain/enums';
 import { LIMITS } from '../../domain/limits';
 import { between } from './columns';
@@ -149,10 +150,10 @@ export const assistantConfig = sqliteTable(
   ],
 );
 
-/** Logro desbloqueable. `rule` describe la condición, p. ej. { type: 'streak', days: 30 }. */
+/** Logro desbloqueable. `rule` describe la condición para conseguirlo. */
 export const achievement = sqliteTable('achievement', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   icon: text('icon').notNull(),
-  rule: text('rule', { mode: 'json' }).notNull().$type<Record<string, unknown>>(),
+  rule: text('rule', { mode: 'json' }).notNull().$type<AchievementRule>(),
 });
