@@ -11,14 +11,21 @@ import { Stepper } from '@/components/Stepper';
 import { EXERCISE_LIST, exerciseById } from '@/db/seed/exercises';
 import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
 import { DAY_TEMPLATES } from '@/db/seed/templates';
+import { LEVEL_STANDARDS, REP_SCHEMES } from '@/db/seed/training';
+import { scaleThresholds, strengthLevel } from '@/domain/levels';
 import { LIMITS } from '@/domain/limits';
 import { combineMuscles } from '@/domain/muscles';
+import { estimateOneRepMax, formatScheme, suggestedScheme } from '@/domain/training';
 import { color, font, space } from '@/theme';
 
 // Datos de ejemplo tomados del catálogo; la Fase 1 los leerá de la base de datos.
 const PUSH_DAY = DAY_TEMPLATES[0];
 const pushMuscles = combineMuscles(PUSH_DAY.exercises.map(exerciseById));
 const muscleName = (id: MuscleId) => MUSCLES.find((m) => m.id === id)?.name ?? id;
+
+// Ejemplo: press de banca (compuesto) con objetivo hipertrofia y 75 kg de peso corporal.
+const BENCH_SCHEME = formatScheme(suggestedScheme(REP_SCHEMES, 'hypertrophy', true));
+const BENCH_THRESHOLDS = scaleThresholds(LEVEL_STANDARDS.banca ?? [], 75);
 
 /**
  * Galería temporal para probar los componentes base en el móvil.
@@ -29,6 +36,9 @@ export default function ComponentGallery() {
   const [reps, setReps] = useState(8);
   const [done, setDone] = useState(false);
   const [muscle, setMuscle] = useState<MuscleId | null>('pecho');
+
+  const level = strengthLevel(kg, BENCH_THRESHOLDS);
+  const nextLevel = level.next ? ` · faltan ${level.next.kgToGo} kg para ${level.next.name}` : '';
 
   const toggleMuscle = (id: MuscleId) => setMuscle((current) => (current === id ? null : id));
   const filtered = EXERCISE_LIST.filter(
@@ -94,7 +104,7 @@ export default function ComponentGallery() {
         </Card>
 
         <Card style={styles.cardContent}>
-          <Text style={styles.caption}>Serie 1</Text>
+          <Text style={styles.caption}>Press de banca · objetivo {BENCH_SCHEME}</Text>
           <View style={styles.row}>
             <View style={styles.fill}>
               <Stepper
@@ -122,6 +132,13 @@ export default function ComponentGallery() {
             title={done ? 'Serie hecha ✓' : 'Confirmar serie'}
             onPress={() => setDone(!done)}
           />
+          <Text style={styles.caption}>
+            1RM estimado: <Text style={styles.value}>{estimateOneRepMax(kg, reps)} kg</Text>
+          </Text>
+          <Text style={styles.caption}>
+            Nivel: <Text style={styles.value}>{level.name}</Text>
+            {nextLevel}
+          </Text>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -149,4 +166,5 @@ const styles = StyleSheet.create({
   exerciseName: { color: color.textMuted, fontSize: font.tiny, textAlign: 'center' },
   fill: { flex: 1 },
   caption: { color: color.textMuted, fontSize: font.caption },
+  value: { color: color.accent, fontWeight: '700' },
 });

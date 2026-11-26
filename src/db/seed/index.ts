@@ -112,7 +112,7 @@ export function seedCatalog(db: Database): boolean {
       .run();
 
     tx.insert(schema.repScheme)
-      .values(REP_SCHEMES.map(({ compound, ...rest }) => ({ ...rest, isCompound: compound })))
+      .values([...REP_SCHEMES])
       .run();
 
     tx.insert(schema.dayTemplate)

@@ -1,21 +1,15 @@
-import type { TrainingGoal } from '../../domain/enums';
+import type { RepSchemeRule } from '../../domain/training';
 import type { ExerciseId } from './exercises';
 
 /** Series × reps sugeridas según el objetivo, para ejercicios compuestos y accesorios. */
 export const REP_SCHEMES = [
-  { goal: 'strength', compound: true, sets: 5, repMin: 3, repMax: 5 },
-  { goal: 'strength', compound: false, sets: 3, repMin: 6, repMax: 8 },
-  { goal: 'hypertrophy', compound: true, sets: 4, repMin: 6, repMax: 8 },
-  { goal: 'hypertrophy', compound: false, sets: 3, repMin: 10, repMax: 12 },
-  { goal: 'endurance', compound: true, sets: 3, repMin: 12, repMax: 15 },
-  { goal: 'endurance', compound: false, sets: 3, repMin: 15, repMax: 20 },
-] as const satisfies readonly {
-  goal: TrainingGoal;
-  compound: boolean;
-  sets: number;
-  repMin: number;
-  repMax: number;
-}[];
+  { goal: 'strength', isCompound: true, sets: 5, repMin: 3, repMax: 5 },
+  { goal: 'strength', isCompound: false, sets: 3, repMin: 6, repMax: 8 },
+  { goal: 'hypertrophy', isCompound: true, sets: 4, repMin: 6, repMax: 8 },
+  { goal: 'hypertrophy', isCompound: false, sets: 3, repMin: 10, repMax: 12 },
+  { goal: 'endurance', isCompound: true, sets: 3, repMin: 12, repMax: 15 },
+  { goal: 'endurance', isCompound: false, sets: 3, repMin: 15, repMax: 20 },
+] as const satisfies readonly RepSchemeRule[];
 
 /**
  * Peso (kg) para alcanzar cada nivel, de Principiante a Élite, en una persona de 75 kg.
