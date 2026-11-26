@@ -13,6 +13,12 @@ Reglas para que el código de FORJA sea fácil de leer, de cambiar y de crecer.
 | `src/db/`         | Esquema de SQLite, cliente y migraciones    | El esquema se cambia en `schema/` y luego `npm run db:generate`; las migraciones generadas no se editan a mano |
 | `src/theme.ts`    | Colores, tamaños, radios y espacios         | Única fuente de valores visuales                                                                               |
 
+## Catálogo
+
+Los ejercicios, músculos, rutinas populares y logros están en `src/db/seed/`, tipados: si un ejercicio menciona un músculo que no existe, TypeScript da error.
+
+Para cambiar el catálogo: edita esos archivos y **sube `CATALOG_VERSION`** en `src/db/seed/index.ts`. La app lo recarga al arrancar sin tocar los entrenamientos del usuario.
+
 ## Nombres
 
 - Código en **inglés** (`stepValue`, `useHoldRepeat`); textos de la app y comentarios en **español**.
