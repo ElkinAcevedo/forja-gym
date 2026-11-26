@@ -1,25 +1,16 @@
 /// <reference types="node" />
-// Solo esta prueba usa Node: aplica el esquema en el SQLite integrado de Node.
 /**
  * Aplica las migraciones a un SQLite real en memoria (el que trae Node) y comprueba
  * que las reglas del esquema protegen los datos.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
-const MIGRATIONS_DIR = join(__dirname, 'migrations');
+import { migrationStatements } from './testing';
 
 function createDatabase() {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
-  const files = readdirSync(MIGRATIONS_DIR)
-    .filter((f) => f.endsWith('.sql'))
-    .sort();
-  for (const file of files) {
-    const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf8');
-    for (const statement of sql.split('--> statement-breakpoint')) db.exec(statement);
-  }
+  for (const statement of migrationStatements()) db.exec(statement);
   return db;
 }
 
