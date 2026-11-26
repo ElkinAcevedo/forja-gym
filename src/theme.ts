@@ -5,6 +5,8 @@ export const color = {
   accentSoft: 'rgba(200,241,53,.14)',
   muscleSecondary: 'rgba(200,241,53,.42)',
   muscleOff: '#353B47',
+  heroBg: '#1A2011', // tarjeta destacada (tono plano del degradado del mockup)
+  heroBorder: '#3A4A14',
   surface1: '#16191F',
   surface2: '#1E222A',
   line: '#2A2F39',
