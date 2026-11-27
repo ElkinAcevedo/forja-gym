@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.elkinacevedo.forja",
       "adaptiveIcon": {
         "backgroundColor": "#0D0F13",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

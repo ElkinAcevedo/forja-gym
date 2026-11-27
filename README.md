@@ -50,6 +50,17 @@ npx expo start
 
 Escanea el código QR con Expo Go. El móvil y el ordenador tienen que estar en la misma red WiFi; si no conecta, usa `npx expo start --tunnel`.
 
+### Build de desarrollo (Android)
+
+Instala FORJA como una app propia en lugar de usar Expo Go. Requiere una cuenta de [expo.dev](https://expo.dev).
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest build --platform android --profile development
+```
+
+Al terminar, escanea el QR del build con el móvil para instalar el APK. Después, `npx expo start` sirve el código a esa app. Solo hay que repetir el build al añadir una librería nativa, cambiar `app.json` o actualizar el SDK de Expo.
+
 ### Scripts
 
 | Comando               | Qué hace                                                         |
