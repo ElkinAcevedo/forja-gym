@@ -16,6 +16,7 @@ import {
   finishSession,
   getWorkoutExercise,
   getWorkoutPlan,
+  removeSet,
   saveSet,
   type WorkoutPlan,
 } from '@/services/session';
@@ -194,6 +195,12 @@ export function useWorkout(chosenDayId: string | undefined) {
   const addSet = (exerciseId: string, tracking: Parameters<typeof addSetCopy>[1]) =>
     updateSets(exerciseId, (sets) => addSetCopy(sets, tracking));
 
+  /** Quita una serie de la lista y, si estaba guardada, de la sesión. */
+  const deleteDraftSet = (exerciseId: string, index: number) => {
+    if (state?.sessionId) removeSet(db, state.sessionId, exerciseId, index, new Date());
+    updateSets(exerciseId, (sets) => sets.filter((_, i) => i !== index));
+  };
+
   /** Termina el entrenamiento (si llegó a empezar) y deja la pantalla lista para otro. */
   const finish = () => {
     if (state?.sessionId) finishSession(db, state.sessionId, new Date());
@@ -213,6 +220,7 @@ export function useWorkout(chosenDayId: string | undefined) {
     changeValue,
     toggleSet,
     addSet,
+    deleteDraftSet,
     finish,
   };
 }

@@ -170,6 +170,9 @@ export default function TrainScreen() {
               saved={set.savedSetId !== null}
               onChange={(field, value) => workout.changeValue(exercise.card.id, i, field, value)}
               onToggleSaved={() => onToggle(i)}
+              onDelete={
+                sets.length > 1 ? () => workout.deleteDraftSet(exercise.card.id, i) : undefined
+              }
             />
           ))}
           <View style={styles.addSet}>

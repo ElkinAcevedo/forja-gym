@@ -3,7 +3,14 @@ import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testi
 import type { SetValues } from '@/domain/workout';
 
 import { clearRestPreference, getRestPreference, saveRestPreference } from './preferences';
-import { deleteSet, finishSession, getWorkoutExercise, getWorkoutPlan, saveSet } from './session';
+import {
+  deleteSet,
+  finishSession,
+  getWorkoutExercise,
+  getWorkoutPlan,
+  removeSet,
+  saveSet,
+} from './session';
 
 const MONDAY = new Date('2026-11-23T17:00:00.000Z'); // lunes: Push
 const THURSDAY = new Date('2026-11-26T17:00:00.000Z'); // jueves: descanso
@@ -105,6 +112,18 @@ describe('servicio de sesión', () => {
     const { setId } = logBench(kg(80, 8), MONDAY);
     deleteSet(db, setId, MONDAY);
     expect(getWorkoutPlan(db, MONDAY).exercises[0].savedSets).toEqual([]);
+  });
+
+  it('eliminar una serie sube una posición las siguientes', () => {
+    const { sessionId } = logBench(kg(80, 8), MONDAY, 0);
+    logBench(kg(82.5, 7), MONDAY, 1);
+    logBench(kg(85, 6), MONDAY, 2);
+    removeSet(db, sessionId, 'banca', 1, MONDAY);
+    const saved = getWorkoutPlan(db, MONDAY).exercises[0].savedSets;
+    expect(saved.map((s) => [s.position, s.values.weightKg])).toEqual([
+      [0, 80],
+      [1, 85],
+    ]);
   });
 
   it('una sesión olvidada abierta más de 12 horas se cierra sola', () => {

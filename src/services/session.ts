@@ -5,7 +5,7 @@
  * Cada serie se guarda en el momento en que se confirma con ✓: si la app se cierra a mitad
  * del entrenamiento no se pierde nada y la sesión se retoma al volver.
  */
-import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 
 import * as schema from '@/db/schema';
 import type { AppDatabase, IdGenerator } from '@/db/types';
@@ -268,6 +268,36 @@ export function deleteSet(db: AppDatabase, setId: string, now: Date) {
     .set({ deletedAt: at, updatedAt: at })
     .where(eq(schema.setLog.id, setId))
     .run();
+}
+
+/**
+ * Elimina la serie `position` de un ejercicio en la sesión (si estaba guardada) y sube una
+ * posición las siguientes: las posiciones casan cada serie con la de la última sesión.
+ */
+export function removeSet(
+  db: AppDatabase,
+  sessionId: string,
+  exerciseId: string,
+  position: number,
+  now: Date,
+) {
+  const at = now.toISOString();
+  const { setLog } = schema;
+  const sameExercise = and(
+    eq(setLog.sessionId, sessionId),
+    eq(setLog.exerciseId, exerciseId),
+    isNull(setLog.deletedAt),
+  );
+  db.transaction((tx) => {
+    tx.update(setLog)
+      .set({ deletedAt: at, updatedAt: at })
+      .where(and(sameExercise, eq(setLog.position, position)))
+      .run();
+    tx.update(setLog)
+      .set({ position: sql`${setLog.position} - 1`, updatedAt: at })
+      .where(and(sameExercise, gt(setLog.position, position)))
+      .run();
+  });
 }
 
 /** Da por terminado el entrenamiento. */

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { FieldSpec, SetField, SetValues } from '@/domain/workout';
 import { color, font, radius, size, space } from '@/theme';
@@ -17,9 +17,14 @@ type Props = {
   saved: boolean;
   onChange: (field: SetField, value: number) => void;
   onToggleSaved: () => void;
+  /** Elimina la serie; sin él (p. ej. si es la única) el número no se puede tocar. */
+  onDelete?: () => void;
 };
 
-/** Una serie del registro: un stepper por campo y el botón ✓ que la confirma o la desmarca. */
+/**
+ * Una serie del registro: un stepper por campo y el botón ✓ que la confirma o la desmarca.
+ * Tocar el número pregunta si eliminar la serie.
+ */
 export function SetRow({
   number,
   fields,
@@ -29,10 +34,26 @@ export function SetRow({
   saved,
   onChange,
   onToggleSaved,
+  onDelete,
 }: Props) {
+  const confirmDelete = () =>
+    Alert.alert(`¿Eliminar la serie ${number}?`, undefined, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: onDelete },
+    ]);
+
   return (
     <View style={styles.row}>
-      <Text style={styles.number}>{number}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Eliminar serie ${number}`}
+        disabled={!onDelete}
+        onPress={confirmDelete}
+        hitSlop={4}
+        style={styles.numberColumn}>
+        <Text style={styles.number}>{number}</Text>
+        {onDelete && <Text style={styles.delete}>✕</Text>}
+      </Pressable>
 
       {fields.map((spec) => {
         const stored = values[spec.field];
@@ -82,13 +103,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
+  numberColumn: { width: 22, height: size.control, justifyContent: 'center' },
   number: {
-    width: 22,
-    lineHeight: size.control,
     textAlign: 'center',
     color: color.textMuted,
     fontWeight: '700',
   },
+  delete: { color: color.textMuted, fontSize: font.tiny, textAlign: 'center' },
   field: { flex: 1, gap: 3 },
   previous: { color: color.textMuted, fontSize: font.tiny, textAlign: 'center' },
   check: {
