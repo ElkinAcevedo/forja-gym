@@ -5,7 +5,7 @@ import type { MuscleId } from '@/db/seed/muscles';
 import { color, radius } from '@/theme';
 
 import { BodyMap, preferredView } from './body/BodyMap';
-import { EquipmentIcon } from './EquipmentIcon';
+import { EquipmentIcon } from './icons/EquipmentIcon';
 
 type Props = {
   primary: readonly MuscleId[];

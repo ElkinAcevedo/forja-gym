@@ -3,28 +3,18 @@
  * foráneas activas: si algún dato apunta a algo que no existe, la prueba falla.
  */
 import { sql } from 'drizzle-orm';
-import { drizzle, type SQLJsDatabase } from 'drizzle-orm/sql-js';
-import initSqlJs from 'sql.js';
 
 import * as schema from '../schema';
-import { migrationStatements } from '../testing';
+import { createTestDatabase, type TestDatabase } from '../testing';
 import { CATALOG_VERSION, seedCatalog } from './index';
 
-async function createDatabase() {
-  const SQL = await initSqlJs();
-  const sqlite = new SQL.Database();
-  sqlite.run('PRAGMA foreign_keys = ON');
-  for (const statement of migrationStatements()) sqlite.run(statement);
-  return drizzle(sqlite, { schema });
-}
-
 describe('seedCatalog', () => {
-  let db: SQLJsDatabase<typeof schema>;
+  let db: TestDatabase;
   const count = (table: string) =>
     db.get<{ n: number }>(sql.raw(`SELECT count(*) AS n FROM ${table}`)).n;
 
   beforeEach(async () => {
-    db = await createDatabase();
+    db = await createTestDatabase();
   });
 
   it('carga todo el catálogo del mockup', () => {

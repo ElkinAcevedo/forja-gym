@@ -5,9 +5,10 @@
  * `PRAGMA user_version`, un número que SQLite reserva para la app.
  */
 import { getTableColumns, sql, type SQL } from 'drizzle-orm';
-import type { BaseSQLiteDatabase, SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
+import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import * as schema from '../schema';
+import type { AppDatabase } from '../types';
 import { ACHIEVEMENTS } from './achievements';
 import { buildAssistantOptions, DAYS_PER_WEEK } from './assistant';
 import { EQUIPMENT } from './equipment';
@@ -18,9 +19,6 @@ import { LEVEL_STANDARDS, REP_SCHEMES } from './training';
 
 /** Súbelo cada vez que cambien los datos del catálogo para que se recarguen. */
 export const CATALOG_VERSION = 1;
-
-/** Cualquier base SQLite síncrona con nuestro esquema: la de Expo en la app, sql.js en las pruebas. */
-type Database = BaseSQLiteDatabase<'sync', unknown, typeof schema>;
 
 /**
  * Columnas no clave de una tabla con el valor que se intentó insertar (`excluded`),
@@ -41,7 +39,7 @@ function excludedColumns(table: SQLiteTable): Record<string, SQL> {
  * se actualizan con upsert para no romper esas referencias. Las tablas de relación, que nadie
  * referencia, se vacían y se vuelven a llenar.
  */
-export function seedCatalog(db: Database): boolean {
+export function seedCatalog(db: AppDatabase): boolean {
   const loaded = db.get<{ user_version: number }>(sql`PRAGMA user_version`);
   if (loaded.user_version >= CATALOG_VERSION) return false;
 

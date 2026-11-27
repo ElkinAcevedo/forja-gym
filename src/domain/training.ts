@@ -38,3 +38,16 @@ export function estimateOneRepMax(weightKg: number, reps: number): number {
   if (reps === 1) return weightKg;
   return roundTo(weightKg * (1 + reps / 30), 0.5);
 }
+
+/** Tiempo medio que dura una serie en sí, sin contar el descanso. */
+const SET_WORK_SECONDS = 40;
+
+/**
+ * Duración estimada de un entrenamiento en minutos: cada serie dura lo que se trabaja más
+ * el descanso. Se redondea a 5 minutos porque es una estimación, no una promesa.
+ */
+export function estimateWorkoutMinutes(totalSets: number, restSeconds: number): number {
+  if (totalSets <= 0) return 0;
+  const minutes = (totalSets * (SET_WORK_SECONDS + restSeconds)) / 60;
+  return Math.max(5, roundTo(minutes, 5));
+}

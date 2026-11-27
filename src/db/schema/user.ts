@@ -194,6 +194,26 @@ export const setLog = sqliteTable(
   ],
 );
 
+/**
+ * Preferencias del usuario para un ejercicio concreto. Por ahora, el descanso entre series
+ * que eligió ajustándolo durante el entrenamiento (nulo = el sugerido).
+ */
+export const exercisePreference = sqliteTable(
+  'exercise_preference',
+  {
+    userId: userId(),
+    exerciseId: text('exercise_id')
+      .notNull()
+      .references(() => exercise.id),
+    restSeconds: integer('rest_seconds'),
+    ...syncColumns(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.exerciseId] }),
+    check('exercise_preference_rest', between(t.restSeconds, LIMITS.restSeconds)),
+  ],
+);
+
 /** Meta del perfil. `exerciseId` es nulo en las metas de peso corporal. */
 export const goal = sqliteTable('goal', {
   id: text('id').primaryKey(),
