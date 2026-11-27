@@ -1,21 +1,24 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
+import { ExercisePicker } from '@/components/ExercisePicker';
 import { ExerciseThumb } from '@/components/ExerciseThumb';
 import { Toast } from '@/components/Toast';
 import { ExerciseSummary } from '@/components/workout/ExerciseSummary';
 import { RestBar } from '@/components/workout/RestBar';
 import { SetRow } from '@/components/workout/SetRow';
+import { db } from '@/db/client';
 import { formatClock } from '@/domain/format';
 import { fieldsFor, isExerciseDone } from '@/domain/workout';
 import { useNow } from '@/hooks/useNow';
 import { useToast } from '@/hooks/useToast';
 import { useWorkout } from '@/hooks/useWorkout';
+import { getExerciseCards } from '@/services/catalog';
 import type { WorkoutPlan } from '@/services/session';
 import { color, font, space } from '@/theme';
 
@@ -28,12 +31,36 @@ export default function TrainScreen() {
   const toast = useToast();
   const { state } = workout;
   const now = useNow(!!state?.sessionId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // El catálogo no cambia mientras la app está abierta: se lee una sola vez.
+  const catalog = useMemo(() => getExerciseCards(db), []);
 
   if (!state) return null;
   const { plan, drafts, currentId } = state;
 
+  const picker = (
+    <ExercisePicker
+      visible={pickerOpen}
+      exercises={catalog}
+      onClose={() => setPickerOpen(false)}
+      onPick={(exercise) => {
+        setPickerOpen(false);
+        workout.addExercise(exercise.id);
+      }}
+    />
+  );
+
   if (plan.exercises.length === 0) {
-    return <RestDay days={plan.trainableDays} onChoose={setChosenDayId} />;
+    return (
+      <>
+        <RestDay
+          days={plan.trainableDays}
+          onChoose={setChosenDayId}
+          onFreeWorkout={() => setPickerOpen(true)}
+        />
+        {picker}
+      </>
+    );
   }
 
   const index = Math.max(
@@ -105,6 +132,16 @@ export default function TrainScreen() {
               </Pressable>
             );
           })}
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Añadir otro ejercicio"
+            style={styles.carouselItem}>
+            <View style={styles.otherTile}>
+              <Text style={styles.otherPlus}>+</Text>
+            </View>
+            <Text style={styles.carouselName}>Otro</Text>
+          </Pressable>
         </ScrollView>
 
         <ExerciseSummary exercise={exercise} />
@@ -158,6 +195,7 @@ export default function TrainScreen() {
         />
       </ScrollView>
       <Toast message={toast.message} />
+      {picker}
     </SafeAreaView>
   );
 }
@@ -165,10 +203,12 @@ export default function TrainScreen() {
 type RestDayProps = {
   days: WorkoutPlan['trainableDays'];
   onChoose: (dayId: string) => void;
+  /** Entrenar ejercicios sueltos elegidos en el selector. */
+  onFreeWorkout: () => void;
 };
 
 /** Día de descanso: permite entrenar igualmente uno de los días de la rutina. */
-function RestDay({ days, onChoose }: RestDayProps) {
+function RestDay({ days, onChoose, onFreeWorkout }: RestDayProps) {
   // Si la rutina repite un día (p. ej. Legs dos veces), basta con ofrecerlo una vez.
   const unique = days.filter((d, i) => days.findIndex((o) => o.name === d.name) === i);
 
@@ -186,6 +226,12 @@ function RestDay({ days, onChoose }: RestDayProps) {
               <Chip key={d.id} label={d.name} onPress={() => onChoose(d.id)} />
             ))}
           </View>
+          <Button
+            title="Elegir ejercicios sueltos"
+            variant="secondary"
+            size="small"
+            onPress={onFreeWorkout}
+          />
         </Card>
       </View>
     </SafeAreaView>
@@ -213,6 +259,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: color.accent,
   },
+  otherTile: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: color.line,
+    backgroundColor: color.thumbBg,
+  },
+  otherPlus: { color: color.accent, fontSize: 30 },
   doneMark: { color: color.bg, fontSize: 11, fontWeight: '900' },
   setsHeader: { flexDirection: 'row', gap: space.sm, paddingBottom: space.xs },
   columnLabel: { color: color.textMuted, fontSize: font.tiny },

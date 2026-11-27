@@ -3,7 +3,7 @@ import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testi
 import type { SetValues } from '@/domain/workout';
 
 import { getRestPreference, saveRestPreference } from './preferences';
-import { deleteSet, finishSession, getWorkoutPlan, saveSet } from './session';
+import { deleteSet, finishSession, getWorkoutExercise, getWorkoutPlan, saveSet } from './session';
 
 const MONDAY = new Date('2026-11-23T17:00:00.000Z'); // lunes: Push
 const THURSDAY = new Date('2026-11-26T17:00:00.000Z'); // jueves: descanso
@@ -118,5 +118,33 @@ describe('servicio de sesión', () => {
     saveRestPreference(db, 'banca', 165, MONDAY); // lo vuelve a cambiar: se actualiza
     expect(getRestPreference(db, 'banca')).toBe(165);
     expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(165);
+  });
+
+  it('un ejercicio añadido desde el selector trae su historial y su descanso', () => {
+    logBench(kg(80, 8), MONDAY);
+    finishSession(db, getWorkoutPlan(db, MONDAY).session!.id, MONDAY);
+
+    const bench = getWorkoutExercise(db, 'banca', null);
+    expect(bench.lastSession).toEqual([kg(80, 8)]);
+    expect(bench.restSeconds).toBe(150);
+    expect(bench.savedSets).toEqual([]);
+  });
+
+  it('una serie de un ejercicio añadido hace que aparezca al retomar la sesión', () => {
+    const plan = getWorkoutPlan(db, MONDAY);
+    saveSet(
+      db,
+      {
+        sessionId: null,
+        routineDayId: plan.day!.id,
+        exerciseId: 'sentadilla', // no es del día Push
+        position: 0,
+        values: kg(100, 5),
+      },
+      MONDAY,
+      newId,
+    );
+    const ids = getWorkoutPlan(db, MONDAY).exercises.map((e) => e.card.id);
+    expect(ids.at(-1)).toBe('sentadilla');
   });
 });

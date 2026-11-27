@@ -110,6 +110,54 @@ function getBestWeight(db: AppDatabase, exerciseId: string): number | null {
   return row?.best ?? null;
 }
 
+type ExerciseContext = {
+  profile: ReturnType<typeof getProfile>;
+  rules: ReturnType<typeof getRepSchemes>;
+  restPreferences: Map<string, number>;
+  sessionId: string | null;
+};
+
+const buildContext = (db: AppDatabase, sessionId: string | null): ExerciseContext => ({
+  profile: getProfile(db),
+  rules: getRepSchemes(db),
+  restPreferences: getRestPreferences(db),
+  sessionId,
+});
+
+/** Todo lo que el registro necesita de un ejercicio: esquema, descanso, historial y hoy. */
+function buildWorkoutExercise(
+  db: AppDatabase,
+  card: ExerciseCard,
+  { profile, rules, restPreferences, sessionId }: ExerciseContext,
+  savedRows: (typeof schema.setLog.$inferSelect)[],
+): WorkoutExercise {
+  return {
+    card,
+    scheme: suggestedScheme(rules, profile.goal, card.isCompound),
+    restSeconds: restSecondsFor(
+      profile.restSeconds,
+      card.isCompound,
+      restPreferences.get(card.id) ?? null,
+    ),
+    lastSession: getLastSessionSets(db, card.id, sessionId),
+    bestWeightKg: getBestWeight(db, card.id),
+    savedSets: [...savedRows]
+      .sort((a, b) => a.position - b.position)
+      .map((s) => ({ id: s.id, position: s.position, values: valuesOf(s) })),
+  };
+}
+
+/** Un ejercicio que se añade al entrenamiento en curso desde el selector. */
+export function getWorkoutExercise(
+  db: AppDatabase,
+  exerciseId: string,
+  sessionId: string | null,
+): WorkoutExercise {
+  const [card] = getExerciseCards(db, [exerciseId]);
+  if (!card) throw new Error(`Ejercicio no encontrado: ${exerciseId}`);
+  return buildWorkoutExercise(db, card, buildContext(db, sessionId), []);
+}
+
 /**
  * Qué registrar ahora: la sesión abierta (si hay), el día que se entrena y, por cada
  * ejercicio, su esquema de series, la última sesión y lo ya confirmado hoy.
@@ -140,28 +188,20 @@ export function getWorkoutPlan(db: AppDatabase, now: Date, chosenDayId?: string)
   const exerciseIds = [
     ...new Set([...(day?.exerciseIds ?? []), ...saved.map((s) => s.exerciseId)]),
   ];
-  const rules = getRepSchemes(db);
-  const restPreferences = getRestPreferences(db);
+  const context = buildContext(db, session?.id ?? null);
 
   return {
     session: session ? { id: session.id, startedAt: session.startedAt } : null,
     day: day?.name ? { id: day.id, name: day.name } : null,
     trainableDays,
-    exercises: getExerciseCards(db, exerciseIds).map((card) => ({
-      card,
-      scheme: suggestedScheme(rules, profile.goal, card.isCompound),
-      restSeconds: restSecondsFor(
-        profile.restSeconds,
-        card.isCompound,
-        restPreferences.get(card.id) ?? null,
+    exercises: getExerciseCards(db, exerciseIds).map((card) =>
+      buildWorkoutExercise(
+        db,
+        card,
+        context,
+        saved.filter((s) => s.exerciseId === card.id),
       ),
-      lastSession: getLastSessionSets(db, card.id, session?.id ?? null),
-      bestWeightKg: getBestWeight(db, card.id),
-      savedSets: saved
-        .filter((s) => s.exerciseId === card.id)
-        .sort((a, b) => a.position - b.position)
-        .map((s) => ({ id: s.id, position: s.position, values: valuesOf(s) })),
-    })),
+    ),
     settings: {
       autofill: profile.autofill,
       incrementKg: profile.incrementKg,

@@ -14,6 +14,7 @@ import {
 import {
   deleteSet,
   finishSession,
+  getWorkoutExercise,
   getWorkoutPlan,
   saveSet,
   type WorkoutPlan,
@@ -160,6 +161,35 @@ export function useWorkout(chosenDayId: string | undefined) {
     return { isPr: result.isPr };
   };
 
+  /**
+   * Añade un ejercicio elegido en el selector y lo muestra. Si ya estaba, solo lo selecciona.
+   * No se guarda nada hasta que se confirme su primera serie.
+   */
+  const addExercise = (exerciseId: string) => {
+    if (!state) return;
+    if (state.plan.exercises.some((e) => e.card.id === exerciseId)) {
+      selectExercise(exerciseId);
+      return;
+    }
+    const exercise = getWorkoutExercise(db, exerciseId, state.sessionId);
+    const sets = buildDraftSets(
+      exercise.scheme.sets,
+      exercise.card.tracking,
+      exercise.lastSession,
+      state.plan.settings.autofill,
+      [],
+    );
+    setState(
+      (s) =>
+        s && {
+          ...s,
+          currentId: exerciseId,
+          plan: { ...s.plan, exercises: [...s.plan.exercises, exercise] },
+          drafts: { ...s.drafts, [exerciseId]: sets },
+        },
+    );
+  };
+
   const addSet = (exerciseId: string, tracking: Parameters<typeof addSetCopy>[1]) =>
     updateSets(exerciseId, (sets) => addSetCopy(sets, tracking));
 
@@ -177,6 +207,7 @@ export function useWorkout(chosenDayId: string | undefined) {
     skipRest: restTimer.skip,
     finishRest: restTimer.finish,
     selectExercise,
+    addExercise,
     changeValue,
     toggleSet,
     addSet,
