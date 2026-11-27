@@ -42,6 +42,7 @@ describe('formatos', () => {
   it('peso con su unidad', () => {
     expect(formatWeight(80, 'kg')).toBe('80 kg');
     expect(formatWeight(80, 'lb')).toBe('176.5 lb');
+    expect(formatWeight(15, 'kg', true)).toBe('15 kg c/u');
   });
 
   it('volumen en miles', () => {

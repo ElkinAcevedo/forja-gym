@@ -9,12 +9,18 @@ export function formatClock(totalSeconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-/** Resumen de una serie: "80 kg × 8" (o "176.5 lb × 8"), "45 s", "500 m", "1:30 · 400 m". */
+/**
+ * Resumen de una serie: "80 kg × 8" (o "176.5 lb × 8"), "15 kg c/u × 10" con `each`,
+ * "45 s", "500 m", "1:30 · 400 m".
+ */
 export function formatSet(
   { weightKg, reps, durationS, distanceM }: SetValues,
   unit: WeightUnit = 'kg',
+  each = false,
 ): string {
-  if (weightKg !== null && reps !== null) return `${formatWeight(weightKg, unit)} × ${reps}`;
+  if (weightKg !== null && reps !== null) {
+    return `${formatWeight(weightKg, unit, each)} × ${reps}`;
+  }
   const parts = [
     durationS !== null ? (durationS >= 60 ? formatClock(durationS) : `${durationS} s`) : null,
     distanceM !== null ? `${distanceM} m` : null,

@@ -14,7 +14,7 @@ import { RestBar } from '@/components/workout/RestBar';
 import { SetRow } from '@/components/workout/SetRow';
 import { db } from '@/db/client';
 import { formatClock } from '@/domain/format';
-import { formatWeight, incrementFor } from '@/domain/units';
+import { formatWeight, incrementFor, isWeightPerDumbbell } from '@/domain/units';
 import { fieldsFor, isExerciseDone } from '@/domain/workout';
 import { useNow } from '@/hooks/useNow';
 import { useToast } from '@/hooks/useToast';
@@ -22,6 +22,12 @@ import { useWorkout } from '@/hooks/useWorkout';
 import { getExerciseCards } from '@/services/catalog';
 import type { WorkoutPlan } from '@/services/session';
 import { color, font, space } from '@/theme';
+
+/** Cómo se cuenta el peso según el equipo (ver `isWeightPerDumbbell`). */
+const WEIGHT_HINT: Partial<Record<string, string>> = {
+  mancuernas: 'Peso de una mancuerna',
+  barra: 'Peso total, con la barra',
+};
 
 const THUMB_SIZE = 74;
 
@@ -79,7 +85,9 @@ export default function TrainScreen() {
     const { isPr } = workout.toggleSet(exercise.card.id, setIndex);
     const weight = sets[setIndex].values.weightKg ?? 0;
     if (isPr)
-      toast.show(`🏆 ¡Nuevo récord! ${formatWeight(weight, unit)} en ${exercise.card.name}`);
+      toast.show(
+        `🏆 ¡Nuevo récord! ${formatWeight(weight, unit, isWeightPerDumbbell(exercise.card.equipmentId))} en ${exercise.card.name}`,
+      );
   };
 
   const onNext = () => {
@@ -159,6 +167,9 @@ export default function TrainScreen() {
             ))}
             <View style={styles.checkColumn} />
           </View>
+          {exercise.card.tracking === 'weight_reps' && WEIGHT_HINT[exercise.card.equipmentId] && (
+            <Text style={styles.weightHint}>{WEIGHT_HINT[exercise.card.equipmentId]}</Text>
+          )}
           {sets.map((set, i) => (
             <SetRow
               key={i}
@@ -281,6 +292,7 @@ const styles = StyleSheet.create({
   doneMark: { color: color.bg, fontSize: 11, fontWeight: '900' },
   setsHeader: { flexDirection: 'row', gap: space.sm, paddingBottom: space.xs },
   columnLabel: { color: color.textMuted, fontSize: font.tiny },
+  weightHint: { color: color.textMuted, fontSize: font.tiny },
   numberColumn: { width: 22, textAlign: 'center' },
   checkColumn: { width: 44 },
   addSet: { marginTop: space.gap },
