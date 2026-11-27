@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { db } from '@/db/client';
 import { newId } from '@/db/ids';
+import { confirmSetFeedback, recordFeedback } from '@/device/haptics';
 import {
   addSetCopy,
   buildDraftSets,
@@ -18,6 +19,8 @@ import {
   type WorkoutPlan,
 } from '@/services/session';
 
+import { useRestTimer } from './useRestTimer';
+
 type State = {
   plan: WorkoutPlan;
   /** Series en pantalla de cada ejercicio, por id de ejercicio. */
@@ -25,8 +28,6 @@ type State = {
   sessionId: string | null;
   currentId: string | null;
 };
-
-export type Rest = { endsAt: number; totalSeconds: number };
 
 function loadState(chosenDayId: string | undefined): State {
   const plan = getWorkoutPlan(db, new Date(), chosenDayId);
@@ -50,14 +51,31 @@ function loadState(chosenDayId: string | undefined): State {
 
 /**
  * Estado y acciones del registro de un entrenamiento. La pantalla solo dibuja; aquí se
- * coordinan las series en pantalla, el guardado en la base de datos y el descanso.
+ * coordinan las series en pantalla, el guardado en la base de datos y el descanso
+ * (ver `useRestTimer`).
  *
  * shortcut: al volver a la pestaña se recarga desde la base de datos, así que los ajustes de
  * series aún sin confirmar vuelven a los valores precargados. Si molesta, guardar el borrador.
  */
 export function useWorkout(chosenDayId: string | undefined) {
   const [state, setState] = useState<State | null>(null);
-  const [rest, setRest] = useState<Rest | null>(null);
+
+  // Al ajustar el descanso de un ejercicio, las siguientes series ya usan el nuevo valor.
+  const onRestSaved = useCallback((exerciseId: string, restSeconds: number) => {
+    setState(
+      (s) =>
+        s && {
+          ...s,
+          plan: {
+            ...s.plan,
+            exercises: s.plan.exercises.map((e) =>
+              e.card.id === exerciseId ? { ...e, restSeconds } : e,
+            ),
+          },
+        },
+    );
+  }, []);
+  const restTimer = useRestTimer(onRestSaved);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,10 +88,9 @@ export function useWorkout(chosenDayId: string | undefined) {
       (s) => s && { ...s, drafts: { ...s.drafts, [exerciseId]: update(s.drafts[exerciseId]) } },
     );
 
-  const selectExercise = (exerciseId: string) => {
-    setRest(null);
+  // El descanso sigue corriendo al cambiar de ejercicio: es normal prepararse mientras tanto.
+  const selectExercise = (exerciseId: string) =>
     setState((s) => s && { ...s, currentId: exerciseId });
-  };
 
   const changeValue = (exerciseId: string, index: number, field: SetField, value: number) =>
     updateSets(exerciseId, (sets) =>
@@ -130,8 +147,16 @@ export function useWorkout(chosenDayId: string | undefined) {
             : s.plan,
         },
     );
-    const totalSeconds = state.plan.settings.restSeconds;
-    setRest({ endsAt: now.getTime() + totalSeconds * 1000, totalSeconds });
+    const exercise = state.plan.exercises.find((e) => e.card.id === exerciseId);
+    if (exercise) {
+      restTimer.start({
+        id: exerciseId,
+        name: exercise.card.name,
+        restSeconds: exercise.restSeconds,
+      });
+    }
+    if (result.isPr) recordFeedback();
+    else confirmSetFeedback();
     return { isPr: result.isPr };
   };
 
@@ -141,14 +166,16 @@ export function useWorkout(chosenDayId: string | undefined) {
   /** Termina el entrenamiento (si llegó a empezar) y deja la pantalla lista para otro. */
   const finish = () => {
     if (state?.sessionId) finishSession(db, state.sessionId, new Date());
-    setRest(null);
+    restTimer.skip();
     setState(loadState(undefined));
   };
 
   return {
     state,
-    rest,
-    endRest: useCallback(() => setRest(null), []),
+    rest: restTimer.rest,
+    adjustRest: restTimer.adjust,
+    skipRest: restTimer.skip,
+    finishRest: restTimer.finish,
     selectExercise,
     changeValue,
     toggleSet,

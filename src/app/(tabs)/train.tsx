@@ -146,8 +146,9 @@ export default function TrainScreen() {
           <RestBar
             endsAt={workout.rest.endsAt}
             totalSeconds={workout.rest.totalSeconds}
-            onSkip={workout.endRest}
-            onFinish={workout.endRest}
+            onAdjust={workout.adjustRest}
+            onSkip={workout.skipRest}
+            onFinish={workout.finishRest}
           />
         )}
 
