@@ -17,12 +17,12 @@ import type { ExerciseCard } from '@/services/catalog';
 import { color, font, radius, space } from '@/theme';
 
 import { BodyMap } from './body/BodyMap';
+import { BODY_VIEWBOX } from './body/bodyShapes';
 import { Card } from './Card';
 import { Chip } from './Chip';
 import { ExerciseThumb } from './ExerciseThumb';
 
 const COLUMNS = 3;
-const MAP_HEIGHT = 200;
 
 type Props = {
   visible: boolean;
@@ -42,6 +42,9 @@ export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
   const [filter, setFilter] = useState<ExerciseFilter>(NO_FILTER);
   const { width } = useWindowDimensions();
   const thumbSize = (width - space.screen * 2 - space.gap * (COLUMNS - 1)) / COLUMNS;
+  // Los dos mapas ocupan todo el ancho de la tarjeta: más grandes, más fáciles de tocar.
+  const mapWidth = (width - space.screen * 2 - space.gap * 2 - space.lg) / 2;
+  const mapHeight = (mapWidth * BODY_VIEWBOX.height) / BODY_VIEWBOX.width;
   const results = filterExercises(exercises, filter);
   const muscle = filter.muscle as MuscleId | null;
 
@@ -80,7 +83,7 @@ export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
                   <BodyMap
                     key={view}
                     view={view}
-                    height={MAP_HEIGHT}
+                    height={mapHeight}
                     primary={muscle ? [muscle] : []}
                     selected={muscle}
                     onPressMuscle={toggleMuscle}

@@ -42,7 +42,7 @@ describe('servicios de lectura', () => {
         restSeconds: 180,
         tracking: 'weight_reps',
         primary: ['pecho'],
-        secondary: ['triceps', 'hombros'],
+        secondary: ['triceps', 'deltoide_anterior'],
       });
     });
 

@@ -19,18 +19,18 @@ export type ExerciseSeed = {
 // prettier-ignore
 export const EXERCISES = [
   // Empuje
-  { id: 'banca', name: 'Press de banca', equipment: 'barra', compound: true, rest: 180, primary: ['pecho'], secondary: ['triceps', 'hombros'] },
-  { id: 'inclinado', name: 'Press inclinado', equipment: 'mancuernas', compound: false, rest: 120, primary: ['pecho'], secondary: ['hombros', 'triceps'] },
-  { id: 'peckdeck', name: 'Peck deck', equipment: 'maquina', compound: false, rest: 90, primary: ['pecho'], secondary: ['hombros'] },
-  { id: 'militar', name: 'Press militar', equipment: 'barra', compound: true, rest: 150, primary: ['hombros'], secondary: ['triceps', 'trapecio'] },
-  { id: 'laterales', name: 'Elevaciones laterales', equipment: 'mancuernas', compound: false, rest: 60, primary: ['hombros'], secondary: ['trapecio'] },
+  { id: 'banca', name: 'Press de banca', equipment: 'barra', compound: true, rest: 180, primary: ['pecho'], secondary: ['triceps', 'deltoide_anterior'] },
+  { id: 'inclinado', name: 'Press inclinado', equipment: 'mancuernas', compound: false, rest: 120, primary: ['pecho'], secondary: ['deltoide_anterior', 'triceps'] },
+  { id: 'peckdeck', name: 'Peck deck', equipment: 'maquina', compound: false, rest: 90, primary: ['pecho'], secondary: ['deltoide_anterior'] },
+  { id: 'militar', name: 'Press militar', equipment: 'barra', compound: true, rest: 150, primary: ['deltoide_anterior', 'deltoide_lateral'], secondary: ['triceps', 'trapecio'] },
+  { id: 'laterales', name: 'Elevaciones laterales', equipment: 'mancuernas', compound: false, rest: 60, primary: ['deltoide_lateral'], secondary: ['trapecio'] },
   { id: 'triceppolea', name: 'Extensión tríceps', equipment: 'polea', compound: false, rest: 60, primary: ['triceps'], secondary: [] },
-  { id: 'fondos', name: 'Fondos', equipment: 'corporal', compound: false, rest: 120, primary: ['triceps', 'pecho'], secondary: ['hombros'] },
+  { id: 'fondos', name: 'Fondos', equipment: 'corporal', compound: false, rest: 120, primary: ['triceps', 'pecho'], secondary: ['deltoide_anterior'] },
   // Tirón
   { id: 'dominadas', name: 'Dominadas', equipment: 'corporal', compound: true, rest: 150, primary: ['dorsales'], secondary: ['biceps', 'antebrazos'] },
   { id: 'jalon', name: 'Jalón al pecho', equipment: 'maquina', compound: false, rest: 120, primary: ['dorsales'], secondary: ['biceps'] },
-  { id: 'remo', name: 'Remo con barra', equipment: 'barra', compound: true, rest: 150, primary: ['dorsales', 'trapecio'], secondary: ['biceps', 'lumbar'] },
-  { id: 'facepull', name: 'Face pull', equipment: 'polea', compound: false, rest: 60, primary: ['hombros', 'trapecio'], secondary: [] },
+  { id: 'remo', name: 'Remo con barra', equipment: 'barra', compound: true, rest: 150, primary: ['dorsales', 'espalda_alta'], secondary: ['trapecio', 'deltoide_posterior', 'biceps', 'lumbar'] },
+  { id: 'facepull', name: 'Face pull', equipment: 'polea', compound: false, rest: 60, primary: ['deltoide_posterior', 'espalda_alta'], secondary: ['trapecio'] },
   { id: 'curl', name: 'Curl con barra', equipment: 'barra', compound: false, rest: 90, primary: ['biceps'], secondary: ['antebrazos'] },
   { id: 'martillo', name: 'Curl martillo', equipment: 'mancuernas', compound: false, rest: 60, primary: ['biceps', 'antebrazos'], secondary: [] },
   // Pierna

@@ -27,7 +27,12 @@ describe('getHomeData', () => {
       'laterales',
       'triceppolea',
     ]);
-    expect(home.today?.muscles.primary).toEqual(['pecho', 'hombros', 'triceps']);
+    expect(home.today?.muscles.primary).toEqual([
+      'pecho',
+      'deltoide_anterior',
+      'deltoide_lateral',
+      'triceps',
+    ]);
     // Hipertrofia: banca y militar 4 series, el resto 3, con el descanso de cada ejercicio.
     expect(home.today?.estimatedMinutes).toBe(45);
   });

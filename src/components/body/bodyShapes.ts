@@ -4,6 +4,7 @@
  * Para que los dos lados sean siempre simétricos, solo se dibuja el lado derecho de cada
  * músculo par (`mirrored: true`) y la app lo refleja para obtener el izquierdo.
  * Los músculos del centro (abdominales, trapecio, lumbar) se dibujan completos.
+ * La espalda alta (romboides) es par y queda entre el trapecio y los dorsales.
  */
 import type { MuscleId } from '@/db/seed/muscles';
 import type { BodyView } from '@/domain/enums';
@@ -33,8 +34,13 @@ export const BODY_OUTLINE = {
 } as const;
 
 // Compartidos por las dos vistas: se ven igual de frente y de espalda.
-const deltoid = side(
-  'M140 76C151 78 158 88 158 102C158 112 154 120 148 124C144 112 138 100 130 90C132 82 135 78 140 76Z',
+// El deltoide se parte en dos: la cara externa (lateral) y la que mira al torso, que de
+// frente es el anterior y de espalda el posterior.
+const deltoidOuter = side(
+  'M145 77C152 80 158 90 158 102C158 112 154 120 149 123C148 108 147 92 145 77Z',
+);
+const deltoidInner = side(
+  'M140 76C142 76 144 76 145 77C147 92 148 108 149 123L148 124C144 112 138 100 130 90C132 82 135 78 140 76Z',
 );
 const upperArm = side(
   'M146 128C153 128 157 138 157 150C157 162 153 170 148 172C143 170 140 160 140 148C140 138 142 130 146 128Z',
@@ -43,10 +49,11 @@ const forearm = side(
   'M148 178C156 180 160 196 162 212C164 224 164 236 162 244C158 248 154 246 152 238C149 222 145 204 144 190C144 182 145 178 148 178Z',
 );
 
-/** Músculos visibles en cada vista. Hombros, antebrazos y gemelos aparecen en las dos. */
+/** Músculos visibles en cada vista. Deltoide lateral, antebrazos y gemelos aparecen en las dos. */
 export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDrawing>>> = {
   front: {
-    hombros: deltoid,
+    deltoide_anterior: deltoidInner,
+    deltoide_lateral: deltoidOuter,
     pecho: side('M102 82C112 76 126 78 132 86C138 94 140 104 134 112C126 120 112 120 102 114Z'),
     biceps: upperArm,
     antebrazos: forearm,
@@ -75,9 +82,13 @@ export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDr
   },
   back: {
     trapecio: center(
-      'M100 54C108 60 120 68 134 74C126 84 114 94 106 110L100 122L94 110C86 94 74 84 66 74C80 68 92 60 100 54Z',
+      'M100 54C108 60 120 68 134 74C126 84 116 92 108 98L100 102L92 98C84 92 74 84 66 74C80 68 92 60 100 54Z',
     ),
-    hombros: deltoid,
+    espalda_alta: side(
+      'M101 105L109 101C117 95 126 87 133 80C136 86 137 92 136 97C126 101 116 110 107 121L101 129Z',
+    ),
+    deltoide_posterior: deltoidInner,
+    deltoide_lateral: deltoidOuter,
     dorsales: side(
       'M108 124C116 112 126 100 137 98C141 114 139 136 131 154C124 166 114 172 106 172C104 156 104 138 108 124Z',
     ),

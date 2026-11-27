@@ -22,7 +22,7 @@ describe('seedCatalog', () => {
   it('carga todo el catálogo del mockup', () => {
     expect(seedCatalog(db)).toBe(true);
 
-    expect(count('muscle')).toBe(14);
+    expect(count('muscle')).toBe(17);
     expect(count('equipment')).toBe(5);
     expect(count('exercise')).toBe(20);
     expect(count('rep_scheme')).toBe(6);
@@ -44,7 +44,7 @@ describe('seedCatalog', () => {
       expect.arrayContaining([
         { muscleId: 'pecho', role: 'primary' },
         { muscleId: 'triceps', role: 'secondary' },
-        { muscleId: 'hombros', role: 'secondary' },
+        { muscleId: 'deltoide_anterior', role: 'secondary' },
       ]),
     );
   });
@@ -64,6 +64,15 @@ describe('seedCatalog', () => {
     expect(db.get<{ user_version: number }>(sql`PRAGMA user_version`).user_version).toBe(
       CATALOG_VERSION,
     );
+  });
+
+  it('al recargar el catálogo quita los músculos retirados', () => {
+    seedCatalog(db);
+    db.run(sql`INSERT INTO muscle (id, name, view, muscle_group)
+               VALUES ('hombros', 'Hombros', 'front', 'Hombros')`);
+    db.run(sql`PRAGMA user_version = 0`);
+    seedCatalog(db);
+    expect(count('muscle')).toBe(17);
   });
 
   it('al recargar el catálogo conserva los entrenamientos del usuario', () => {
