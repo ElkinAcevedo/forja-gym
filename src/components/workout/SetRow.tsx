@@ -1,8 +1,10 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { FieldSpec, SetField, SetValues } from '@/domain/workout';
 import { color, font, radius, size, space } from '@/theme';
 
+import { ConfirmDialog } from '../ConfirmDialog';
 import { Stepper } from '../Stepper';
 
 type Props = {
@@ -36,11 +38,7 @@ export function SetRow({
   onToggleSaved,
   onDelete,
 }: Props) {
-  const confirmDelete = () =>
-    Alert.alert(`¿Eliminar la serie ${number}?`, undefined, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: onDelete },
-    ]);
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <View style={styles.row}>
@@ -48,12 +46,23 @@ export function SetRow({
         accessibilityRole="button"
         accessibilityLabel={`Eliminar serie ${number}`}
         disabled={!onDelete}
-        onPress={confirmDelete}
+        onPress={() => setConfirming(true)}
         hitSlop={4}
         style={styles.numberColumn}>
         <Text style={styles.number}>{number}</Text>
         {onDelete && <Text style={styles.delete}>✕</Text>}
       </Pressable>
+      <ConfirmDialog
+        visible={confirming}
+        title={`¿Eliminar la serie ${number}?`}
+        message={saved ? 'También se borra de este entrenamiento.' : undefined}
+        confirmTitle="Eliminar"
+        onConfirm={() => {
+          setConfirming(false);
+          onDelete?.();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
 
       {fields.map((spec) => {
         const stored = values[spec.field];
