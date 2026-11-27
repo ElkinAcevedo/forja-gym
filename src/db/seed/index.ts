@@ -4,7 +4,7 @@
  * Solo se ejecuta cuando cambia `CATALOG_VERSION`: la versión cargada se guarda en
  * `PRAGMA user_version`, un número que SQLite reserva para la app.
  */
-import { getTableColumns, notInArray, sql, type SQL } from 'drizzle-orm';
+import { eq, getTableColumns, inArray, notInArray, sql, type SQL } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import * as schema from '../schema';
@@ -50,7 +50,18 @@ export function seedCatalog(db: AppDatabase): boolean {
     tx.delete(schema.programTemplateDay).run();
     tx.delete(schema.dayTemplateExercise).run();
     tx.delete(schema.dayTemplate).run();
-    tx.delete(schema.exerciseMuscle).run();
+    // Los músculos de los ejercicios creados por el usuario no son del catálogo: se conservan.
+    tx.delete(schema.exerciseMuscle)
+      .where(
+        inArray(
+          schema.exerciseMuscle.exerciseId,
+          tx
+            .select({ id: schema.exercise.id })
+            .from(schema.exercise)
+            .where(eq(schema.exercise.isCustom, false)),
+        ),
+      )
+      .run();
     tx.delete(schema.levelStandard).run();
     tx.delete(schema.repScheme).run();
 

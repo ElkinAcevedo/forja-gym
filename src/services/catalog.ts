@@ -1,9 +1,9 @@
 import { asc, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@/db/schema';
-import type { EquipmentId } from '@/db/seed/equipment';
-import type { MuscleId } from '@/db/seed/muscles';
-import type { AppDatabase } from '@/db/types';
+import { EQUIPMENT, type EquipmentId } from '@/db/seed/equipment';
+import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
+import type { AppDatabase, IdGenerator } from '@/db/types';
 import type { TrackingMode } from '@/domain/enums';
 
 /** Lo que la interfaz necesita para mostrar un ejercicio: nombre, equipo y músculos. */
@@ -57,4 +57,66 @@ export function getExerciseCards(db: AppDatabase, ids?: readonly string[]): Exer
 
   if (!ids) return cards;
   return ids.flatMap((id) => cards.find((c) => c.id === id) ?? []);
+}
+
+/** Largo máximo del nombre de un ejercicio propio. */
+export const EXERCISE_NAME_MAX = 60;
+
+/** Descanso de un ejercicio propio: el de un accesorio; se ajusta luego con ±15 s. */
+const CUSTOM_REST_S = 90;
+
+export type NewExercise = { name: string; equipmentId: EquipmentId; primary: MuscleId[] };
+
+/** El nombre tal como se guarda: sin espacios sobrantes. */
+export const cleanExerciseName = (name: string) => name.trim().replace(/\s+/g, ' ');
+
+/** Si ya hay un ejercicio con ese nombre (sin distinguir mayúsculas). */
+export function exerciseNameTaken(db: AppDatabase, name: string): boolean {
+  const clean = cleanExerciseName(name).toLowerCase();
+  return !!db
+    .select({ id: schema.exercise.id })
+    .from(schema.exercise)
+    .where(sql`lower(${schema.exercise.name}) = ${clean}`)
+    .get();
+}
+
+/**
+ * Crea un ejercicio propio para lo que falte en el catálogo. Su imagen es el mapa muscular,
+ * como la del resto, así que no rompe el estilo visual. Valida aquí y no solo en la pantalla.
+ */
+export function createExercise(
+  db: AppDatabase,
+  input: NewExercise,
+  newId: IdGenerator,
+): ExerciseCard {
+  const name = cleanExerciseName(input.name);
+  if (name.length === 0 || name.length > EXERCISE_NAME_MAX) {
+    throw new Error(`Nombre de ejercicio no válido: "${name}"`);
+  }
+  if (!EQUIPMENT.some((e) => e.id === input.equipmentId)) {
+    throw new Error(`Equipo no válido: ${input.equipmentId}`);
+  }
+  const primary = [...new Set(input.primary)];
+  if (primary.length === 0 || primary.some((m) => !MUSCLES.some((x) => x.id === m))) {
+    throw new Error('Elige al menos un músculo válido');
+  }
+  if (exerciseNameTaken(db, name)) throw new Error(`Ya existe un ejercicio llamado "${name}"`);
+
+  const id = newId();
+  db.transaction((tx) => {
+    tx.insert(schema.exercise)
+      .values({
+        id,
+        name,
+        equipmentId: input.equipmentId,
+        isCompound: false,
+        restSeconds: CUSTOM_REST_S,
+        isCustom: true,
+      })
+      .run();
+    tx.insert(schema.exerciseMuscle)
+      .values(primary.map((muscleId) => ({ exerciseId: id, muscleId, role: 'primary' as const })))
+      .run();
+  });
+  return getExerciseCards(db, [id])[0];
 }

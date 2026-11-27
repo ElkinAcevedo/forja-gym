@@ -1,0 +1,1 @@
+ALTER TABLE `exercise` ADD `is_custom` integer DEFAULT false NOT NULL;

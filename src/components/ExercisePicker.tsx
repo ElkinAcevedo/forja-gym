@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { EQUIPMENT, type EquipmentId } from '@/db/seed/equipment';
 import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
@@ -18,9 +9,11 @@ import { color, font, radius, space } from '@/theme';
 
 import { BodyMap } from './body/BodyMap';
 import { BODY_VIEWBOX } from './body/bodyShapes';
+import { Button } from './Button';
 import { Card } from './Card';
 import { Chip } from './Chip';
 import { ExerciseThumb } from './ExerciseThumb';
+import { Sheet } from './Sheet';
 
 const COLUMNS = 3;
 
@@ -29,6 +22,8 @@ type Props = {
   /** Ejercicios entre los que elegir (normalmente, todo el catálogo). */
   exercises: readonly ExerciseCard[];
   onPick: (exercise: ExerciseCard) => void;
+  /** Abre "Crear ejercicio" para lo que no esté en el catálogo. */
+  onCreate: () => void;
   onClose: () => void;
 };
 
@@ -38,7 +33,7 @@ const muscleName = (id: MuscleId) => MUSCLES.find((m) => m.id === id)?.name ?? i
  * Selector de ejercicio por imagen: se toca un músculo en el mapa y se filtra por equipo;
  * cada ejercicio se elige por su miniatura.
  */
-export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
+export function ExercisePicker({ visible, exercises, onPick, onCreate, onClose }: Props) {
   const [filter, setFilter] = useState<ExerciseFilter>(NO_FILTER);
   const { width } = useWindowDimensions();
   const thumbSize = (width - space.screen * 2 - space.gap * (COLUMNS - 1)) / COLUMNS;
@@ -84,130 +79,77 @@ export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={styles.dismiss} onPress={onClose} accessibilityLabel="Cerrar" />
-        <SafeAreaView style={styles.sheet} edges={['bottom']}>
-          <View style={styles.grab} />
-          <View style={styles.header}>
-            <Text style={styles.title}>Elige ejercicio</Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar selector"
-              hitSlop={10}
-              style={styles.close}>
-              <Text style={styles.closeText}>✕</Text>
-            </Pressable>
+    <Sheet visible={visible} title="Elige ejercicio" onClose={onClose}>
+      <Text style={styles.muted}>Toca el músculo que quieres trabajar</Text>
+      <Card style={styles.mapCard}>
+        <View style={styles.maps}>
+          {(['front', 'back'] as const).map((view) => (
+            <BodyMap
+              key={view}
+              view={view}
+              height={mapHeight}
+              primary={muscle ? [muscle] : []}
+              selected={muscle}
+              onPressMuscle={toggleMuscle}
+            />
+          ))}
+        </View>
+        {muscle && (
+          <View style={styles.selected}>
+            <Chip label={muscleName(muscle)} variant="selected" />
+            <Chip label="Quitar ✕" onPress={() => toggleMuscle(muscle)} />
           </View>
+        )}
+      </Card>
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <Text style={styles.muted}>Toca el músculo que quieres trabajar</Text>
-            <Card style={styles.mapCard}>
-              <View style={styles.maps}>
-                {(['front', 'back'] as const).map((view) => (
-                  <BodyMap
-                    key={view}
-                    view={view}
-                    height={mapHeight}
-                    primary={muscle ? [muscle] : []}
-                    selected={muscle}
-                    onPressMuscle={toggleMuscle}
-                  />
-                ))}
-              </View>
-              {muscle && (
-                <View style={styles.selected}>
-                  <Chip label={muscleName(muscle)} variant="selected" />
-                  <Chip label="Quitar ✕" onPress={() => toggleMuscle(muscle)} />
-                </View>
-              )}
-            </Card>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.equipment}>
+        <Chip
+          label="Todo"
+          variant={filter.equipment === null ? 'selected' : 'default'}
+          onPress={() => setEquipment(null)}
+        />
+        {EQUIPMENT.map((e) => (
+          <Chip
+            key={e.id}
+            label={e.name}
+            variant={filter.equipment === e.id ? 'selected' : 'default'}
+            onPress={() => setEquipment(e.id)}
+          />
+        ))}
+      </ScrollView>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.equipment}>
-              <Chip
-                label="Todo"
-                variant={filter.equipment === null ? 'selected' : 'default'}
-                onPress={() => setEquipment(null)}
-              />
-              {EQUIPMENT.map((e) => (
-                <Chip
-                  key={e.id}
-                  label={e.name}
-                  variant={filter.equipment === e.id ? 'selected' : 'default'}
-                  onPress={() => setEquipment(e.id)}
-                />
-              ))}
-            </ScrollView>
+      {results.main.length === 0 && results.also.length === 0 ? (
+        <Text style={[styles.muted, styles.empty]}>
+          Ningún ejercicio trabaja ese músculo con ese equipo.
+        </Text>
+      ) : (
+        grid(results.main)
+      )}
 
-            {results.main.length === 0 && results.also.length === 0 ? (
-              <Text style={[styles.muted, styles.empty]}>
-                Ningún ejercicio trabaja ese músculo con ese equipo.
-              </Text>
-            ) : (
-              grid(results.main)
-            )}
-
-            {results.also.length > 0 && (
-              <>
-                <Pressable
-                  onPress={() => setShowAlso((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: showAlso }}
-                  style={styles.alsoHeader}>
-                  <Text style={styles.alsoTitle}>También lo trabajan ({results.also.length})</Text>
-                  <Text style={styles.alsoTitle}>{showAlso ? '▴' : '▾'}</Text>
-                </Pressable>
-                {showAlso && grid(results.also)}
-              </>
-            )}
-          </ScrollView>
-        </SafeAreaView>
+      {results.also.length > 0 && (
+        <>
+          <Pressable
+            onPress={() => setShowAlso((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showAlso }}
+            style={styles.alsoHeader}>
+            <Text style={styles.alsoTitle}>También lo trabajan ({results.also.length})</Text>
+            <Text style={styles.alsoTitle}>{showAlso ? '▴' : '▾'}</Text>
+          </Pressable>
+          {showAlso && grid(results.also)}
+        </>
+      )}
+      <View style={styles.create}>
+        <Button title="+ Crear ejercicio" variant="secondary" size="small" onPress={onCreate} />
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
-  dismiss: { flex: 1 },
-  sheet: {
-    height: '90%',
-    paddingTop: space.gap,
-    backgroundColor: color.bg,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    borderTopWidth: 1,
-    borderColor: color.line,
-  },
-  grab: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    marginBottom: space.md,
-    backgroundColor: color.line,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space.screen,
-  },
-  title: { color: color.text, fontSize: font.heading, fontWeight: '800' },
-  close: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: color.surface2,
-  },
-  closeText: { color: color.textMuted, fontSize: font.body },
-  content: { padding: space.screen, gap: space.md },
   muted: { color: color.textMuted, fontSize: font.caption },
   mapCard: { gap: space.sm, padding: space.gap },
   maps: { flexDirection: 'row', justifyContent: 'center', gap: space.lg },
@@ -224,5 +166,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: color.line,
   },
+  create: { marginTop: space.md },
   alsoTitle: { color: color.textMuted, fontSize: font.label, fontWeight: '700' },
 });
