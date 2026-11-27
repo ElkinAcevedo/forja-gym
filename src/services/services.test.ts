@@ -3,6 +3,8 @@ import { sql } from 'drizzle-orm';
 import { ensureStarterData } from '@/db/starter';
 import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testing';
 
+import { EXERCISE_LIST } from '@/db/seed/exercises';
+
 import { getExerciseCards } from './catalog';
 import { getActiveRoutine } from './routines';
 import { getRecentRecords, getWeekSummary } from './stats';
@@ -36,7 +38,7 @@ describe('servicios de lectura', () => {
       expect(cards.map((c) => c.id)).toEqual(['sentadilla', 'banca']);
       expect(cards[1]).toEqual({
         id: 'banca',
-        name: 'Press de banca',
+        name: 'Press de banca con barra',
         equipmentId: 'barra',
         isCompound: true,
         restSeconds: 180,
@@ -47,7 +49,7 @@ describe('servicios de lectura', () => {
     });
 
     it('sin ids devuelve todo el catálogo', () => {
-      expect(getExerciseCards(db)).toHaveLength(20);
+      expect(getExerciseCards(db)).toHaveLength(EXERCISE_LIST.length);
     });
   });
 

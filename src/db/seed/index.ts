@@ -18,7 +18,7 @@ import { DAY_TEMPLATES, PROGRAMS, PROGRESSION_TIPS } from './templates';
 import { LEVEL_STANDARDS, REP_SCHEMES } from './training';
 
 /** Súbelo cada vez que cambien los datos del catálogo para que se recarguen. */
-export const CATALOG_VERSION = 3;
+export const CATALOG_VERSION = 4;
 
 /**
  * Columnas no clave de una tabla con el valor que se intentó insertar (`excluded`),
