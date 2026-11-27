@@ -1,7 +1,7 @@
 import type { BodyView } from '../../domain/enums';
 
 /**
- * Los 17 músculos del mapa muscular. `view` es la vista en la que se dibuja la
+ * Los 19 músculos del mapa muscular. `view` es la vista en la que se dibuja la
  * miniatura de un ejercicio cuyo músculo principal es este.
  * `group` agrupa músculos para la frecuencia semanal del asistente.
  */
@@ -15,6 +15,7 @@ export const MUSCLES = [
   { id: 'abs', name: 'Abdominales', view: 'front', group: 'Core' },
   { id: 'oblicuos', name: 'Oblicuos', view: 'front', group: 'Core' },
   { id: 'cuadriceps', name: 'Cuádriceps', view: 'front', group: 'Cuádriceps' },
+  { id: 'aductores', name: 'Aductores', view: 'front', group: 'Cuádriceps' },
   { id: 'trapecio', name: 'Trapecio', view: 'back', group: 'Espalda' },
   { id: 'espalda_alta', name: 'Espalda alta', view: 'back', group: 'Espalda' },
   { id: 'dorsales', name: 'Dorsales', view: 'back', group: 'Espalda' },
@@ -22,6 +23,8 @@ export const MUSCLES = [
   { id: 'triceps', name: 'Tríceps', view: 'back', group: 'Brazos' },
   { id: 'lumbar', name: 'Espalda baja', view: 'back', group: 'Espalda' },
   { id: 'gluteos', name: 'Glúteos', view: 'back', group: 'Isquios/Glúteo' },
+  // Glúteo medio: el que trabaja la máquina de abducción.
+  { id: 'abductores', name: 'Abductores', view: 'back', group: 'Isquios/Glúteo' },
   { id: 'isquios', name: 'Isquiotibiales', view: 'back', group: 'Isquios/Glúteo' },
   { id: 'gemelos', name: 'Gemelos', view: 'back', group: 'Gemelos' },
 ] as const satisfies readonly { id: string; name: string; view: BodyView; group: string }[];

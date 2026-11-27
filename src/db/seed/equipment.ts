@@ -4,6 +4,7 @@ export const EQUIPMENT = [
   { id: 'mancuernas', name: 'Mancuernas', icon: 'mancuernas' },
   { id: 'maquina', name: 'Máquina', icon: 'maquina' },
   { id: 'polea', name: 'Polea', icon: 'polea' },
+  { id: 'smith', name: 'Smith', icon: 'smith' },
   { id: 'corporal', name: 'Peso corporal', icon: 'corporal' },
 ] as const;
 

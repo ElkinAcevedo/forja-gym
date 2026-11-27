@@ -71,9 +71,13 @@ export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDr
     oblicuos: side(
       'M115 120C124 118 132 122 134 130C134 150 133 170 130 186C126 194 118 198 115 194Z',
     ),
-    // Cuádriceps: parte externa y la "gota" interna sobre la rodilla.
+    // Cuádriceps: parte externa y la "gota" interna sobre la rodilla. Los aductores ocupan
+    // la cara interna del muslo, junto a la ingle.
+    aductores: side(
+      'M101 238C103 230 106 225 111 222C114 236 113 250 107 261C105 261 103 260 101 258Z',
+    ),
     cuadriceps: side(
-      'M104 224C114 214 130 216 136 228C140 252 136 282 128 304C126 310 122 310 120 304C121 286 114 268 104 258Z',
+      'M113 221C120 214 130 217 136 228C140 252 136 282 128 304C126 310 122 310 120 304C121 286 115 272 109 263C115 250 116 235 113 221Z',
       'M103 262C113 270 121 288 119 302C116 312 106 312 103 304C101 292 101 276 103 262Z',
     ),
     gemelos: side(
@@ -95,6 +99,9 @@ export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDr
     triceps: upperArm,
     antebrazos: forearm,
     lumbar: center('M93 176C97 180 103 180 107 176L110 198C104 202 96 202 90 198Z'),
+    abductores: side(
+      'M113 200C121 192 130 189 135 192C137 199 138 206 137 213C131 205 122 201 113 202Z',
+    ),
     gluteos: side(
       'M101 206C114 200 132 204 137 218C140 234 132 250 118 252C108 252 102 246 101 238Z',
     ),

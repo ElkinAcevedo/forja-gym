@@ -22,8 +22,8 @@ describe('seedCatalog', () => {
   it('carga todo el catálogo del mockup', () => {
     expect(seedCatalog(db)).toBe(true);
 
-    expect(count('muscle')).toBe(17);
-    expect(count('equipment')).toBe(5);
+    expect(count('muscle')).toBe(19);
+    expect(count('equipment')).toBe(6);
     expect(count('exercise')).toBe(20);
     expect(count('rep_scheme')).toBe(6);
     expect(count('level_standard')).toBe(25); // 5 ejercicios × 5 niveles
@@ -72,7 +72,7 @@ describe('seedCatalog', () => {
                VALUES ('hombros', 'Hombros', 'front', 'Hombros')`);
     db.run(sql`PRAGMA user_version = 0`);
     seedCatalog(db);
-    expect(count('muscle')).toBe(17);
+    expect(count('muscle')).toBe(19);
   });
 
   it('al recargar el catálogo conserva los entrenamientos del usuario', () => {
