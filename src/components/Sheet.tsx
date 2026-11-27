@@ -8,11 +8,16 @@ type Props = {
   visible: boolean;
   title: string;
   onClose: () => void;
+  /** false si el contenido ya se desplaza solo (p. ej. una FlatList): evita anidar scrolls. */
+  scroll?: boolean;
   children: ReactNode;
 };
 
+/** Margen interior del contenido. Con `scroll={false}` lo pone el propio contenido. */
+export const SHEET_PADDING = space.screen;
+
 /** Hoja que sube desde abajo con título, botón ✕ y contenido desplazable. */
-export function Sheet({ visible, title, onClose, children }: Props) {
+export function Sheet({ visible, title, onClose, scroll = true, children }: Props) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -30,9 +35,13 @@ export function Sheet({ visible, title, onClose, children }: Props) {
               <Text style={styles.closeText}>✕</Text>
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
+          {scroll ? (
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={styles.fill}>{children}</View>
+          )}
         </SafeAreaView>
       </View>
     </Modal>
@@ -75,5 +84,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface2,
   },
   closeText: { color: color.textMuted, fontSize: font.body },
-  content: { padding: space.screen, gap: space.md },
+  content: { padding: SHEET_PADDING, gap: space.md },
+  fill: { flex: 1 },
 });
