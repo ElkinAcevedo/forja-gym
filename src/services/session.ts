@@ -12,7 +12,6 @@ import type { AppDatabase, IdGenerator } from '@/db/types';
 import { weekdayIndex } from '@/domain/dates';
 import type { WeightUnit } from '@/domain/enums';
 import { isNewRecord } from '@/domain/records';
-import { restSecondsFor } from '@/domain/rest';
 import { suggestedScheme, type RepScheme } from '@/domain/training';
 import { isSessionStale, type SetValues } from '@/domain/workout';
 
@@ -137,12 +136,8 @@ function buildWorkoutExercise(
   return {
     card,
     scheme: suggestedScheme(rules, profile.goal, card.isCompound),
-    restSeconds: restSecondsFor(
-      profile.restSeconds,
-      card.isCompound,
-      restPreferences.get(card.id) ?? null,
-    ),
-    autoRestSeconds: restSecondsFor(profile.restSeconds, card.isCompound, null),
+    restSeconds: restPreferences.get(card.id) ?? card.restSeconds,
+    autoRestSeconds: card.restSeconds,
     lastSession: getLastSessionSets(db, card.id, sessionId),
     bestWeightKg: getBestWeight(db, card.id),
     savedSets: [...savedRows]

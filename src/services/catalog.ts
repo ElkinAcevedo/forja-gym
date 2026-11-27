@@ -12,6 +12,8 @@ export type ExerciseCard = {
   name: string;
   equipmentId: EquipmentId;
   isCompound: boolean;
+  /** Descanso recomendado entre series (catálogo). */
+  restSeconds: number;
   /** Qué se anota en cada serie: peso y reps, tiempo, distancia… */
   tracking: TrackingMode;
   primary: MuscleId[];
@@ -46,6 +48,7 @@ export function getExerciseCards(db: AppDatabase, ids?: readonly string[]): Exer
       name: e.name,
       equipmentId: e.equipmentId as EquipmentId,
       isCompound: e.isCompound,
+      restSeconds: e.restSeconds,
       tracking: e.tracking,
       primary: byRole('primary'),
       secondary: byRole('secondary'),

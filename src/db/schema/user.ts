@@ -45,6 +45,10 @@ export const userProfile = sqliteTable(
     goal: text('goal', { enum: TRAINING_GOALS }).notNull().default('hypertrophy'),
     unit: text('unit', { enum: WEIGHT_UNITS }).notNull().default('kg'),
     incrementKg: real('increment_kg').notNull().default(2.5),
+    /**
+     * Obsoleto: el descanso viene ahora de cada ejercicio del catálogo. Se deja para no
+     * recrear la tabla (otras tablas apuntan a ella) solo por quitar una columna.
+     */
     restSeconds: integer('rest_seconds').notNull().default(90),
     /** Precargar cada serie con el peso y las reps de la última sesión. */
     autofill: integer('autofill', { mode: 'boolean' }).notNull().default(true),

@@ -44,10 +44,17 @@ const SET_WORK_SECONDS = 40;
 
 /**
  * Duración estimada de un entrenamiento en minutos: cada serie dura lo que se trabaja más
- * el descanso. Se redondea a 5 minutos porque es una estimación, no una promesa.
+ * el descanso de su ejercicio. Se redondea a 5 minutos porque es una estimación, no una promesa.
  */
-export function estimateWorkoutMinutes(totalSets: number, restSeconds: number): number {
+export function estimateWorkoutMinutes(
+  exercises: readonly { sets: number; restSeconds: number }[],
+): number {
+  const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
   if (totalSets <= 0) return 0;
-  const minutes = (totalSets * (SET_WORK_SECONDS + restSeconds)) / 60;
+  const seconds = exercises.reduce(
+    (sum, e) => sum + e.sets * (SET_WORK_SECONDS + e.restSeconds),
+    0,
+  );
+  const minutes = seconds / 60;
   return Math.max(5, roundTo(minutes, 5));
 }

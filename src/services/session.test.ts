@@ -62,9 +62,9 @@ describe('servicio de sesión', () => {
     ]);
     expect(plan.exercises[0].scheme).toEqual({ sets: 4, repMin: 6, repMax: 8 });
     expect(plan.settings).toEqual({ autofill: true, incrementKg: 2.5, unit: 'kg' });
-    // Banca es compuesto: 90 s del perfil + 60 s. Las elevaciones laterales, 90 s.
-    expect(plan.exercises[0].restSeconds).toBe(150);
-    expect(plan.exercises[3].restSeconds).toBe(90);
+    // El descanso recomendado de cada ejercicio viene del catálogo.
+    expect(plan.exercises[0].restSeconds).toBe(180); // banca
+    expect(plan.exercises[3].restSeconds).toBe(60); // elevaciones laterales
   });
 
   it('un día de descanso no propone ejercicios, pero deja elegir otro día de la rutina', () => {
@@ -143,8 +143,8 @@ describe('servicio de sesión', () => {
     saveRestPreference(db, 'banca', 15, MONDAY);
     clearRestPreference(db, 'banca', MONDAY);
     const [bench] = getWorkoutPlan(db, MONDAY).exercises;
-    expect(bench.restSeconds).toBe(150);
-    expect(bench.autoRestSeconds).toBe(150);
+    expect(bench.restSeconds).toBe(180);
+    expect(bench.autoRestSeconds).toBe(180);
 
     saveRestPreference(db, 'banca', 120, MONDAY); // se puede volver a elegir después
     expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(120);
@@ -156,7 +156,7 @@ describe('servicio de sesión', () => {
 
     const bench = getWorkoutExercise(db, 'banca', null);
     expect(bench.lastSession).toEqual([kg(80, 8)]);
-    expect(bench.restSeconds).toBe(150);
+    expect(bench.restSeconds).toBe(180);
     expect(bench.savedSets).toEqual([]);
   });
 

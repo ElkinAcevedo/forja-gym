@@ -6,6 +6,8 @@ import { sql } from 'drizzle-orm';
 
 import * as schema from '../schema';
 import { createTestDatabase, type TestDatabase } from '../testing';
+import { LIMITS } from '../../domain/limits';
+import { EXERCISE_LIST } from './exercises';
 import { CATALOG_VERSION, seedCatalog } from './index';
 
 describe('seedCatalog', () => {
@@ -45,6 +47,15 @@ describe('seedCatalog', () => {
         { muscleId: 'hombros', role: 'secondary' },
       ]),
     );
+  });
+
+  it('cada ejercicio trae un descanso válido', () => {
+    const { min, max, precision } = LIMITS.restSeconds;
+    for (const e of EXERCISE_LIST) {
+      expect(e.rest).toBeGreaterThanOrEqual(min);
+      expect(e.rest).toBeLessThanOrEqual(max);
+      expect(e.rest % precision).toBe(0);
+    }
   });
 
   it('no vuelve a cargar si la versión no cambió', () => {

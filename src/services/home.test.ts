@@ -28,8 +28,8 @@ describe('getHomeData', () => {
       'triceppolea',
     ]);
     expect(home.today?.muscles.primary).toEqual(['pecho', 'hombros', 'triceps']);
-    // Hipertrofia: banca y militar 4 series, el resto 3 → 17 series con 90 s de descanso.
-    expect(home.today?.estimatedMinutes).toBe(35);
+    // Hipertrofia: banca y militar 4 series, el resto 3, con el descanso de cada ejercicio.
+    expect(home.today?.estimatedMinutes).toBe(45);
   });
 
   it('el jueves es descanso', () => {

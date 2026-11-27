@@ -15,6 +15,13 @@
       "when": 1795739104670,
       "tag": "0001_preferencias_por_ejercicio",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795815673892,
+      "tag": "0002_descanso_por_ejercicio",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 
 import * as schema from '@/db/schema';
 import type { AppDatabase } from '@/db/types';
-import { REST_OPTIONS_S, TRAINING_GOALS, WEIGHT_INCREMENTS_KG, WEIGHT_UNITS } from '@/domain/enums';
+import { TRAINING_GOALS, WEIGHT_INCREMENTS_KG, WEIGHT_UNITS } from '@/domain/enums';
 import type { RepSchemeRule } from '@/domain/training';
 
 export type Profile = typeof schema.userProfile.$inferSelect;
@@ -20,9 +20,7 @@ export function getRepSchemes(db: AppDatabase): RepSchemeRule[] {
 }
 
 /** Ajustes que el usuario puede cambiar desde Perfil. */
-export type SettingsPatch = Partial<
-  Pick<Profile, 'unit' | 'goal' | 'incrementKg' | 'restSeconds' | 'autofill'>
->;
+export type SettingsPatch = Partial<Pick<Profile, 'unit' | 'goal' | 'incrementKg' | 'autofill'>>;
 
 const isOneOf = <T>(options: readonly T[], value: T) => options.includes(value);
 
@@ -31,7 +29,7 @@ const isOneOf = <T>(options: readonly T[], value: T) => options.includes(value);
  * escribir: un valor inválido es un error de programación, no algo que deba guardarse.
  */
 export function updateSettings(db: AppDatabase, patch: SettingsPatch, now: Date): Profile {
-  const { unit, goal, incrementKg, restSeconds } = patch;
+  const { unit, goal, incrementKg } = patch;
   if (unit !== undefined && !isOneOf(WEIGHT_UNITS, unit)) {
     throw new Error(`Unidad no válida: ${unit}`);
   }
@@ -40,9 +38,6 @@ export function updateSettings(db: AppDatabase, patch: SettingsPatch, now: Date)
   }
   if (incrementKg !== undefined && !isOneOf<number>(WEIGHT_INCREMENTS_KG, incrementKg)) {
     throw new Error(`Incremento no válido: ${incrementKg}`);
-  }
-  if (restSeconds !== undefined && !isOneOf<number>(REST_OPTIONS_S, restSeconds)) {
-    throw new Error(`Descanso no válido: ${restSeconds}`);
   }
 
   const profile = getProfile(db);

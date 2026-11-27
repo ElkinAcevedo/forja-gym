@@ -39,6 +39,7 @@ describe('servicios de lectura', () => {
         name: 'Press de banca',
         equipmentId: 'barra',
         isCompound: true,
+        restSeconds: 180,
         tracking: 'weight_reps',
         primary: ['pecho'],
         secondary: ['triceps', 'hombros'],

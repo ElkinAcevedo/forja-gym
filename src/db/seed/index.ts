@@ -18,7 +18,7 @@ import { DAY_TEMPLATES, PROGRAMS, PROGRESSION_TIPS } from './templates';
 import { LEVEL_STANDARDS, REP_SCHEMES } from './training';
 
 /** Súbelo cada vez que cambien los datos del catálogo para que se recarguen. */
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 
 /**
  * Columnas no clave de una tabla con el valor que se intentó insertar (`excluded`),
@@ -80,6 +80,7 @@ export function seedCatalog(db: AppDatabase): boolean {
         name: e.name,
         equipmentId: e.equipment,
         isCompound: e.compound,
+        restSeconds: e.rest,
         tracking: e.tracking ?? 'weight_reps',
       })),
       schema.exercise.id,
