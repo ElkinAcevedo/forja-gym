@@ -113,3 +113,30 @@ export const MUSCLE_DRAWINGS: Record<BodyView, Partial<Record<MuscleId, MuscleDr
     ),
   },
 };
+
+/** Trazados de todos los músculos que comparten color, para dibujarlos como una sola figura. */
+export type MuscleLayer = { fill: string; d: string; mirroredD: string };
+
+/**
+ * Agrupa los músculos de una vista por su color. Un mapa que no se toca (miniaturas, inicio)
+ * se dibuja así con unas pocas figuras en vez de una o más por músculo: con muchas miniaturas
+ * en pantalla, crear cientos de figuras SVG era lo que hacía lento el selector.
+ */
+export function muscleLayers(view: BodyView, fillOf: (muscle: MuscleId) => string): MuscleLayer[] {
+  const layers = new Map<string, { own: string[]; mirrored: string[] }>();
+  for (const [id, drawing] of Object.entries(MUSCLE_DRAWINGS[view]) as [
+    MuscleId,
+    MuscleDrawing,
+  ][]) {
+    const fill = fillOf(id);
+    const layer = layers.get(fill) ?? { own: [], mirrored: [] };
+    layer.own.push(...drawing.paths);
+    if (drawing.mirrored) layer.mirrored.push(...drawing.paths);
+    layers.set(fill, layer);
+  }
+  return [...layers].map(([fill, { own, mirrored }]) => ({
+    fill,
+    d: own.join(' '),
+    mirroredD: mirrored.join(' '),
+  }));
+}

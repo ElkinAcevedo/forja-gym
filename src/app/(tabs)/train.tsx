@@ -33,13 +33,22 @@ const WEIGHT_HINT: Partial<Record<string, string>> = {
 
 const THUMB_SIZE = 74;
 
+/**
+ * Tiempo de entrenamiento. Va aparte porque cambia cada segundo: así solo se redibuja este
+ * chip y no la pantalla entera (con el selector abierto, eso eran decenas de miniaturas).
+ */
+function SessionClock({ startedAt }: { startedAt: string | null }) {
+  const now = useNow(startedAt !== null);
+  const elapsed = startedAt ? (now - new Date(startedAt).getTime()) / 1000 : 0;
+  return <Chip label={`● ${formatClock(elapsed)}`} />;
+}
+
 /** Registro rápido: series precargadas, + / − y ✓ que guarda la serie y arranca el descanso. */
 export default function TrainScreen() {
   const [chosenDayId, setChosenDayId] = useState<string>();
   const workout = useWorkout(chosenDayId);
   const toast = useToast();
   const { state } = workout;
-  const now = useNow(!!state?.sessionId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   // Se lee una vez y se vuelve a leer solo al crear un ejercicio propio.
@@ -99,7 +108,6 @@ export default function TrainScreen() {
   const { unit } = plan.settings;
   const fields = fieldsFor(exercise.card.tracking, unit);
   const isLast = index === plan.exercises.length - 1;
-  const elapsed = plan.session ? (now - new Date(plan.session.startedAt).getTime()) / 1000 : 0;
 
   const onToggle = (setIndex: number) => {
     const { isPr } = workout.toggleSet(exercise.card.id, setIndex);
@@ -128,7 +136,7 @@ export default function TrainScreen() {
             <Text style={styles.muted}>Entrenando · {plan.day?.name ?? 'Libre'}</Text>
             <Text style={styles.title}>Registro</Text>
           </View>
-          <Chip label={`● ${formatClock(elapsed)}`} />
+          <SessionClock startedAt={plan.session?.startedAt ?? null} />
         </View>
 
         <ScrollView
