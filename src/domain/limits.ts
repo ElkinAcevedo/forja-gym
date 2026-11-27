@@ -9,6 +9,8 @@ export const LIMITS = {
   durationS: { min: 0, max: 3600, precision: 5 },
   /** Series por distancia (cardio…): de 10 en 10 metros, hasta 100 km. */
   distanceM: { min: 0, max: 100000, precision: 10 },
+  /** Descanso entre series de un ejercicio, ajustable de 15 en 15 segundos. */
+  restSeconds: { min: 15, max: 600, precision: 15 },
   bodyWeightKg: { min: 30, max: 300, precision: 0.1 },
   heightCm: { min: 100, max: 250 },
   /** 0 = lunes … 6 = domingo */

@@ -2,6 +2,7 @@ import { ensureStarterData } from '@/db/starter';
 import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testing';
 import type { SetValues } from '@/domain/workout';
 
+import { getRestPreference, saveRestPreference } from './preferences';
 import { deleteSet, finishSession, getWorkoutPlan, saveSet } from './session';
 
 const MONDAY = new Date('2026-11-23T17:00:00.000Z'); // lunes: Push
@@ -53,7 +54,10 @@ describe('servicio de sesión', () => {
       'triceppolea',
     ]);
     expect(plan.exercises[0].scheme).toEqual({ sets: 4, repMin: 6, repMax: 8 });
-    expect(plan.settings).toEqual({ restSeconds: 90, autofill: true, incrementKg: 2.5 });
+    expect(plan.settings).toEqual({ autofill: true, incrementKg: 2.5 });
+    // Banca es compuesto: 90 s del perfil + 60 s. Las elevaciones laterales, 90 s.
+    expect(plan.exercises[0].restSeconds).toBe(150);
+    expect(plan.exercises[3].restSeconds).toBe(90);
   });
 
   it('un día de descanso no propone ejercicios, pero deja elegir otro día de la rutina', () => {
@@ -107,5 +111,12 @@ describe('servicio de sesión', () => {
     logBench(kg(80, 8), MONDAY);
     const nextDay = new Date(MONDAY.getTime() + 20 * 60 * 60 * 1000);
     expect(getWorkoutPlan(db, nextDay).session).toBeNull();
+  });
+
+  it('recuerda el descanso que el usuario elige para un ejercicio', () => {
+    saveRestPreference(db, 'banca', 180, MONDAY);
+    saveRestPreference(db, 'banca', 165, MONDAY); // lo vuelve a cambiar: se actualiza
+    expect(getRestPreference(db, 'banca')).toBe(165);
+    expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(165);
   });
 });

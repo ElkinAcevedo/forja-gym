@@ -11,10 +11,12 @@ import * as schema from '@/db/schema';
 import type { AppDatabase, IdGenerator } from '@/db/types';
 import { weekdayIndex } from '@/domain/dates';
 import { isNewRecord } from '@/domain/records';
+import { restSecondsFor } from '@/domain/rest';
 import { suggestedScheme, type RepScheme } from '@/domain/training';
 import { isSessionStale, type SetValues } from '@/domain/workout';
 
 import { getExerciseCards, type ExerciseCard } from './catalog';
+import { getRestPreferences } from './preferences';
 import { getProfile, getRepSchemes } from './profile';
 import { getActiveRoutine } from './routines';
 
@@ -23,6 +25,8 @@ export type SavedSet = { id: string; position: number; values: SetValues };
 export type WorkoutExercise = {
   card: ExerciseCard;
   scheme: RepScheme;
+  /** Descanso entre series de este ejercicio (el elegido por el usuario o el sugerido). */
+  restSeconds: number;
   /** Series de la última sesión en que se hizo este ejercicio (para precargar y comparar). */
   lastSession: SetValues[];
   /** Mejor peso histórico, incluidas las series de hoy; nulo si nunca se registró. */
@@ -38,7 +42,7 @@ export type WorkoutPlan = {
   /** Días de entrenamiento de la rutina, para elegir uno en un día de descanso. */
   trainableDays: { id: string; name: string }[];
   exercises: WorkoutExercise[];
-  settings: { restSeconds: number; autofill: boolean; incrementKg: number };
+  settings: { autofill: boolean; incrementKg: number };
 };
 
 const valuesOf = (row: typeof schema.setLog.$inferSelect): SetValues => ({
@@ -137,6 +141,7 @@ export function getWorkoutPlan(db: AppDatabase, now: Date, chosenDayId?: string)
     ...new Set([...(day?.exerciseIds ?? []), ...saved.map((s) => s.exerciseId)]),
   ];
   const rules = getRepSchemes(db);
+  const restPreferences = getRestPreferences(db);
 
   return {
     session: session ? { id: session.id, startedAt: session.startedAt } : null,
@@ -145,6 +150,11 @@ export function getWorkoutPlan(db: AppDatabase, now: Date, chosenDayId?: string)
     exercises: getExerciseCards(db, exerciseIds).map((card) => ({
       card,
       scheme: suggestedScheme(rules, profile.goal, card.isCompound),
+      restSeconds: restSecondsFor(
+        profile.restSeconds,
+        card.isCompound,
+        restPreferences.get(card.id) ?? null,
+      ),
       lastSession: getLastSessionSets(db, card.id, session?.id ?? null),
       bestWeightKg: getBestWeight(db, card.id),
       savedSets: saved
@@ -153,7 +163,6 @@ export function getWorkoutPlan(db: AppDatabase, now: Date, chosenDayId?: string)
         .map((s) => ({ id: s.id, position: s.position, values: valuesOf(s) })),
     })),
     settings: {
-      restSeconds: profile.restSeconds,
       autofill: profile.autofill,
       incrementKg: profile.incrementKg,
     },
