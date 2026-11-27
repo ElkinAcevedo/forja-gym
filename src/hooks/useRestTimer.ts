@@ -4,7 +4,7 @@ import { db } from '@/db/client';
 import { restEndFeedback } from '@/device/haptics';
 import { cancelRestEnd, scheduleRestEnd } from '@/device/notifications';
 import { adjustRest } from '@/domain/rest';
-import { saveRestPreference } from '@/services/preferences';
+import { clearRestPreference, saveRestPreference } from '@/services/preferences';
 
 export type Rest = {
   exerciseId: string;
@@ -12,9 +12,11 @@ export type Rest = {
   /** Momento (ms) en que termina el descanso. */
   endsAt: number;
   totalSeconds: number;
+  /** Descanso automático del ejercicio; si `totalSeconds` difiere, es uno elegido a mano. */
+  autoSeconds: number;
 };
 
-type RestExercise = { id: string; name: string; restSeconds: number };
+type RestExercise = { id: string; name: string; restSeconds: number; autoRestSeconds: number };
 
 /**
  * Descanso entre series: cuenta atrás, aviso con notificación (también con el móvil
@@ -63,25 +65,38 @@ export function useRestTimer(onRestSaved: (exerciseId: string, seconds: number) 
         exerciseName: exercise.name,
         endsAt: Date.now() + exercise.restSeconds * 1000,
         totalSeconds: exercise.restSeconds,
+        autoSeconds: exercise.autoRestSeconds,
       });
       scheduleNotification(exercise.restSeconds, exercise.name);
     },
     [scheduleNotification],
   );
 
-  /** Suma o resta tiempo al descanso en curso y lo recuerda para ese ejercicio. */
-  const adjust = useCallback(
-    (deltaSeconds: number) => {
+  /**
+   * Cambia la duración del descanso en curso y la recuerda para ese ejercicio. Si vuelve a
+   * coincidir con la automática, se olvida la elegida: así sigue los cambios del perfil.
+   */
+  const setTotal = useCallback(
+    (totalSeconds: number) => {
       if (!rest) return;
-      const totalSeconds = adjustRest(rest.totalSeconds, deltaSeconds);
       const endsAt = rest.endsAt + (totalSeconds - rest.totalSeconds) * 1000;
       setRest({ ...rest, totalSeconds, endsAt });
       scheduleNotification(Math.max(1, (endsAt - Date.now()) / 1000), rest.exerciseName);
-      saveRestPreference(db, rest.exerciseId, totalSeconds, new Date());
+      if (totalSeconds === rest.autoSeconds) clearRestPreference(db, rest.exerciseId, new Date());
+      else saveRestPreference(db, rest.exerciseId, totalSeconds, new Date());
       onRestSaved(rest.exerciseId, totalSeconds);
     },
     [rest, scheduleNotification, onRestSaved],
   );
+
+  /** −15 s / +15 s. */
+  const adjust = useCallback(
+    (deltaSeconds: number) => rest && setTotal(adjustRest(rest.totalSeconds, deltaSeconds)),
+    [rest, setTotal],
+  );
+
+  /** Vuelve al descanso automático del ejercicio. */
+  const reset = useCallback(() => rest && setTotal(rest.autoSeconds), [rest, setTotal]);
 
   /** "Saltar": termina el descanso ahora y cancela el aviso. */
   const skip = useCallback(() => {
@@ -96,5 +111,5 @@ export function useRestTimer(onRestSaved: (exerciseId: string, seconds: number) 
     if (!notificationsAllowed.current) restEndFeedback();
   }, []);
 
-  return { rest, start, adjust, skip, finish };
+  return { rest, start, adjust, reset, skip, finish };
 }

@@ -2,7 +2,7 @@ import { ensureStarterData } from '@/db/starter';
 import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testing';
 import type { SetValues } from '@/domain/workout';
 
-import { getRestPreference, saveRestPreference } from './preferences';
+import { clearRestPreference, getRestPreference, saveRestPreference } from './preferences';
 import { deleteSet, finishSession, getWorkoutExercise, getWorkoutPlan, saveSet } from './session';
 
 const MONDAY = new Date('2026-11-23T17:00:00.000Z'); // lunes: Push
@@ -118,6 +118,17 @@ describe('servicio de sesión', () => {
     saveRestPreference(db, 'banca', 165, MONDAY); // lo vuelve a cambiar: se actualiza
     expect(getRestPreference(db, 'banca')).toBe(165);
     expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(165);
+  });
+
+  it('olvidar el descanso elegido vuelve al automático', () => {
+    saveRestPreference(db, 'banca', 15, MONDAY);
+    clearRestPreference(db, 'banca', MONDAY);
+    const [bench] = getWorkoutPlan(db, MONDAY).exercises;
+    expect(bench.restSeconds).toBe(150);
+    expect(bench.autoRestSeconds).toBe(150);
+
+    saveRestPreference(db, 'banca', 120, MONDAY); // se puede volver a elegir después
+    expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(120);
   });
 
   it('un ejercicio añadido desde el selector trae su historial y su descanso', () => {

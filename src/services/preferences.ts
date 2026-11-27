@@ -36,6 +36,16 @@ export function saveRestPreference(
     .run();
 }
 
+/** Olvida el descanso elegido para un ejercicio: vuelve a usar el automático. */
+export function clearRestPreference(db: AppDatabase, exerciseId: string, now: Date) {
+  const { exercisePreference: pref } = schema;
+  // Borrado lógico, como el resto de datos del usuario (para la sincronización futura).
+  db.update(pref)
+    .set({ deletedAt: now.toISOString(), updatedAt: now.toISOString() })
+    .where(eq(pref.exerciseId, exerciseId))
+    .run();
+}
+
 /** Para las pruebas: la preferencia guardada de un ejercicio, o null. */
 export function getRestPreference(db: AppDatabase, exerciseId: string): number | null {
   const row = db

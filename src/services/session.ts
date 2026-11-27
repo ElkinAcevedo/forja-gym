@@ -28,6 +28,8 @@ export type WorkoutExercise = {
   scheme: RepScheme;
   /** Descanso entre series de este ejercicio (el elegido por el usuario o el sugerido). */
   restSeconds: number;
+  /** Descanso automático (el del perfil, +1 min si es compuesto), para poder volver a él. */
+  autoRestSeconds: number;
   /** Series de la última sesión en que se hizo este ejercicio (para precargar y comparar). */
   lastSession: SetValues[];
   /** Mejor peso histórico, incluidas las series de hoy; nulo si nunca se registró. */
@@ -140,6 +142,7 @@ function buildWorkoutExercise(
       card.isCompound,
       restPreferences.get(card.id) ?? null,
     ),
+    autoRestSeconds: restSecondsFor(profile.restSeconds, card.isCompound, null),
     lastSession: getLastSessionSets(db, card.id, sessionId),
     bestWeightKg: getBestWeight(db, card.id),
     savedSets: [...savedRows]

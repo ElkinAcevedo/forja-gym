@@ -154,6 +154,7 @@ export function useWorkout(chosenDayId: string | undefined) {
         id: exerciseId,
         name: exercise.card.name,
         restSeconds: exercise.restSeconds,
+        autoRestSeconds: exercise.autoRestSeconds,
       });
     }
     if (result.isPr) recordFeedback();
@@ -204,6 +205,7 @@ export function useWorkout(chosenDayId: string | undefined) {
     state,
     rest: restTimer.rest,
     adjustRest: restTimer.adjust,
+    resetRest: restTimer.reset,
     skipRest: restTimer.skip,
     finishRest: restTimer.finish,
     selectExercise,
