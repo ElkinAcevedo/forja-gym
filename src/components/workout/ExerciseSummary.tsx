@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { EQUIPMENT } from '@/db/seed/equipment';
+import type { WeightUnit } from '@/domain/enums';
 import { formatSet } from '@/domain/format';
 import { formatScheme } from '@/domain/training';
+import { formatWeight } from '@/domain/units';
 import type { WorkoutExercise } from '@/services/session';
 import { color, font, space } from '@/theme';
 
@@ -19,7 +21,13 @@ function topSet(exercise: WorkoutExercise) {
 }
 
 /** Ficha del ejercicio que se registra: imagen, músculos, última vez, récord y objetivo. */
-export function ExerciseSummary({ exercise }: { exercise: WorkoutExercise }) {
+export function ExerciseSummary({
+  exercise,
+  unit,
+}: {
+  exercise: WorkoutExercise;
+  unit: WeightUnit;
+}) {
   const { card } = exercise;
   const last = topSet(exercise);
   const equipment = EQUIPMENT.find((e) => e.id === card.equipmentId)?.name ?? '';
@@ -40,10 +48,10 @@ export function ExerciseSummary({ exercise }: { exercise: WorkoutExercise }) {
         </View>
       </View>
       <View style={styles.stats}>
-        <StatTile label="Última vez" value={last ? formatSet(last) : '—'} compact />
+        <StatTile label="Última vez" value={last ? formatSet(last, unit) : '—'} compact />
         <StatTile
           label="Récord"
-          value={exercise.bestWeightKg !== null ? `${exercise.bestWeightKg} kg` : '—'}
+          value={exercise.bestWeightKg !== null ? formatWeight(exercise.bestWeightKg, unit) : '—'}
           highlight={exercise.bestWeightKg !== null}
           compact
         />

@@ -2,8 +2,9 @@
  * Reglas del registro de un entrenamiento: qué se anota en cada serie según el tipo de
  * ejercicio, cómo se precargan las series y cuándo una sesión abierta ya no se retoma.
  */
-import type { TrackingMode } from './enums';
+import type { TrackingMode, WeightUnit } from './enums';
 import { LIMITS } from './limits';
+import { fromDisplayWeight, MAX_WEIGHT, toDisplayWeight, WEIGHT_PRECISION } from './units';
 
 /** Valores de una serie. Según el tipo de ejercicio, algunos quedan vacíos (null). */
 export type SetValues = {
@@ -15,7 +16,11 @@ export type SetValues = {
 
 export type SetField = keyof SetValues;
 
-/** Cómo se muestra y ajusta un campo de la serie en la pantalla de registro. */
+/**
+ * Cómo se muestra y ajusta un campo de la serie en la pantalla de registro.
+ * `min`, `max` y `precision` están en la unidad de pantalla; `toDisplay` y `fromDisplay`
+ * convierten entre lo guardado y lo mostrado (solo el peso cambia, si se usan libras).
+ */
 export type FieldSpec = {
   field: SetField;
   label: string;
@@ -23,14 +28,47 @@ export type FieldSpec = {
   min: number;
   max: number;
   precision: number;
+  toDisplay: (stored: number) => number;
+  fromDisplay: (shown: number) => number;
 };
 
-const FIELD_SPECS: Record<SetField, FieldSpec> = {
-  weightKg: { field: 'weightKg', label: 'Peso', unit: 'kg', ...LIMITS.weightKg },
-  reps: { field: 'reps', label: 'Reps', ...LIMITS.reps },
-  durationS: { field: 'durationS', label: 'Tiempo', unit: 's', ...LIMITS.durationS },
-  distanceM: { field: 'distanceM', label: 'Distancia', unit: 'm', ...LIMITS.distanceM },
-};
+const same = (value: number) => value;
+
+function fieldSpec(field: SetField, unit: WeightUnit): FieldSpec {
+  switch (field) {
+    case 'weightKg':
+      return {
+        field,
+        label: 'Peso',
+        unit,
+        min: 0,
+        max: MAX_WEIGHT[unit],
+        precision: WEIGHT_PRECISION,
+        toDisplay: (kg) => toDisplayWeight(kg, unit),
+        fromDisplay: (shown) => fromDisplayWeight(shown, unit),
+      };
+    case 'reps':
+      return { field, label: 'Reps', ...LIMITS.reps, toDisplay: same, fromDisplay: same };
+    case 'durationS':
+      return {
+        field,
+        label: 'Tiempo',
+        unit: 's',
+        ...LIMITS.durationS,
+        toDisplay: same,
+        fromDisplay: same,
+      };
+    case 'distanceM':
+      return {
+        field,
+        label: 'Distancia',
+        unit: 'm',
+        ...LIMITS.distanceM,
+        toDisplay: same,
+        fromDisplay: same,
+      };
+  }
+}
 
 const FIELDS_BY_TRACKING: Record<TrackingMode, SetField[]> = {
   weight_reps: ['weightKg', 'reps'],
@@ -40,8 +78,8 @@ const FIELDS_BY_TRACKING: Record<TrackingMode, SetField[]> = {
 };
 
 /** Campos que se anotan en cada serie de un ejercicio, en orden de pantalla. */
-export const fieldsFor = (tracking: TrackingMode): FieldSpec[] =>
-  FIELDS_BY_TRACKING[tracking].map((field) => FIELD_SPECS[field]);
+export const fieldsFor = (tracking: TrackingMode, unit: WeightUnit = 'kg'): FieldSpec[] =>
+  FIELDS_BY_TRACKING[tracking].map((field) => fieldSpec(field, unit));
 
 export const EMPTY_SET: SetValues = {
   weightKg: null,
@@ -65,7 +103,7 @@ export function planSets(
   autofill: boolean,
 ): DraftSet[] {
   const zeros: SetValues = { ...EMPTY_SET };
-  for (const { field } of fieldsFor(tracking)) zeros[field] = 0;
+  for (const field of FIELDS_BY_TRACKING[tracking]) zeros[field] = 0;
 
   return Array.from({ length: count }, (_, i) => {
     const previous = lastSession[i] ?? lastSession.at(-1);

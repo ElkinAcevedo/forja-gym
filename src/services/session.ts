@@ -10,6 +10,7 @@ import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import * as schema from '@/db/schema';
 import type { AppDatabase, IdGenerator } from '@/db/types';
 import { weekdayIndex } from '@/domain/dates';
+import type { WeightUnit } from '@/domain/enums';
 import { isNewRecord } from '@/domain/records';
 import { restSecondsFor } from '@/domain/rest';
 import { suggestedScheme, type RepScheme } from '@/domain/training';
@@ -42,7 +43,7 @@ export type WorkoutPlan = {
   /** Días de entrenamiento de la rutina, para elegir uno en un día de descanso. */
   trainableDays: { id: string; name: string }[];
   exercises: WorkoutExercise[];
-  settings: { autofill: boolean; incrementKg: number };
+  settings: { autofill: boolean; incrementKg: number; unit: WeightUnit };
 };
 
 const valuesOf = (row: typeof schema.setLog.$inferSelect): SetValues => ({
@@ -205,6 +206,7 @@ export function getWorkoutPlan(db: AppDatabase, now: Date, chosenDayId?: string)
     settings: {
       autofill: profile.autofill,
       incrementKg: profile.incrementKg,
+      unit: profile.unit,
     },
   };
 }

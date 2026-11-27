@@ -54,7 +54,7 @@ describe('servicio de sesión', () => {
       'triceppolea',
     ]);
     expect(plan.exercises[0].scheme).toEqual({ sets: 4, repMin: 6, repMax: 8 });
-    expect(plan.settings).toEqual({ autofill: true, incrementKg: 2.5 });
+    expect(plan.settings).toEqual({ autofill: true, incrementKg: 2.5, unit: 'kg' });
     // Banca es compuesto: 90 s del perfil + 60 s. Las elevaciones laterales, 90 s.
     expect(plan.exercises[0].restSeconds).toBe(150);
     expect(plan.exercises[3].restSeconds).toBe(90);

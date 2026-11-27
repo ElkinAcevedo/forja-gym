@@ -1,5 +1,6 @@
 import type { AppDatabase } from '@/db/types';
 import { startOfWeek, weekDates, weekdayIndex } from '@/domain/dates';
+import type { WeightUnit } from '@/domain/enums';
 import { combineMuscles, type MuscleSet } from '@/domain/muscles';
 import { estimateWorkoutMinutes, suggestedScheme } from '@/domain/training';
 
@@ -19,6 +20,7 @@ export type WeekDay = {
 
 export type HomeData = {
   displayName: string;
+  unit: WeightUnit;
   routineName: string;
   week: WeekDay[];
   /** Entrenamiento de hoy, o `null` si toca descanso. */
@@ -69,6 +71,7 @@ export function getHomeData(db: AppDatabase, now: Date): HomeData {
 
   return {
     displayName: profile.displayName,
+    unit: profile.unit,
     routineName: routine?.name ?? '',
     week,
     today,

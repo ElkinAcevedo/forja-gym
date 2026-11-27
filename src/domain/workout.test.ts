@@ -24,6 +24,14 @@ describe('fieldsFor', () => {
   it('el peso va de 0.5 en 0.5 kg', () => {
     expect(fieldsFor('weight_reps')[0]).toMatchObject({ unit: 'kg', precision: 0.5, max: 500 });
   });
+
+  it('en libras el campo de peso muestra y guarda convirtiendo', () => {
+    const weight = fieldsFor('weight_reps', 'lb')[0];
+    expect(weight).toMatchObject({ unit: 'lb', max: 1102 });
+    expect(weight.toDisplay(80)).toBe(176.5);
+    expect(weight.toDisplay(weight.fromDisplay(135))).toBe(135);
+    expect(fieldsFor('weight_reps', 'lb')[1].toDisplay(8)).toBe(8); // las reps no cambian
+  });
 });
 
 describe('planSets', () => {

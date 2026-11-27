@@ -1,4 +1,6 @@
 /** Textos de cifras tal como los muestra la app. */
+import type { WeightUnit } from './enums';
+import { formatWeight } from './units';
 import type { SetValues } from './workout';
 
 /** Segundos como reloj: 75 → "1:15", 3725 → "62:05". */
@@ -7,9 +9,12 @@ export function formatClock(totalSeconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-/** Resumen de una serie: "80 kg × 8", "45 s", "500 m", "1:30 · 400 m". */
-export function formatSet({ weightKg, reps, durationS, distanceM }: SetValues): string {
-  if (weightKg !== null && reps !== null) return `${weightKg} kg × ${reps}`;
+/** Resumen de una serie: "80 kg × 8" (o "176.5 lb × 8"), "45 s", "500 m", "1:30 · 400 m". */
+export function formatSet(
+  { weightKg, reps, durationS, distanceM }: SetValues,
+  unit: WeightUnit = 'kg',
+): string {
+  if (weightKg !== null && reps !== null) return `${formatWeight(weightKg, unit)} × ${reps}`;
   const parts = [
     durationS !== null ? (durationS >= 60 ? formatClock(durationS) : `${durationS} s`) : null,
     distanceM !== null ? `${distanceM} m` : null,

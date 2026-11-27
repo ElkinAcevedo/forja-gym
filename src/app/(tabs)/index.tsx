@@ -12,6 +12,8 @@ import { StatTile } from '@/components/StatTile';
 import { WeekStrip } from '@/components/WeekStrip';
 import { db } from '@/db/client';
 import { formatLongDate } from '@/domain/dates';
+import { formatSet } from '@/domain/format';
+import { formatVolume, formatWeight } from '@/domain/units';
 import { useFocusData } from '@/hooks/useFocusData';
 import { getHomeData, type HomeData } from '@/services/home';
 import { color, font, space } from '@/theme';
@@ -22,7 +24,7 @@ const loadHome = () => getHomeData(db, new Date());
 
 /** Pantalla Inicio: la semana, el entrenamiento de hoy, el resumen semanal y los récords. */
 export default function HomeScreen() {
-  const data = useFocusData(loadHome);
+  const [data] = useFocusData(loadHome);
   if (!data) return null;
 
   const { summary } = data;
@@ -57,7 +59,7 @@ export default function HomeScreen() {
         <SectionHeader title="Esta semana" />
         <View style={styles.stats}>
           <StatTile label="Sesiones" value={`${summary.sessions}/${summary.plannedSessions}`} />
-          <StatTile label="Volumen" value={`${(summary.volumeKg / 1000).toFixed(1)} t`} />
+          <StatTile label="Volumen" value={formatVolume(summary.volumeKg, data.unit)} />
           <StatTile
             label="Récords"
             value={summary.records > 0 ? `+${summary.records}` : '0'}
@@ -83,10 +85,18 @@ export default function HomeScreen() {
                 <View style={styles.fill}>
                   <Text style={styles.recordName}>{record.exercise.name}</Text>
                   <Text style={styles.muted}>
-                    {record.weightKg} kg{record.reps ? ` × ${record.reps}` : ''}
+                    {formatSet(
+                      {
+                        weightKg: record.weightKg,
+                        reps: record.reps,
+                        durationS: null,
+                        distanceM: null,
+                      },
+                      data.unit,
+                    )}
                   </Text>
                 </View>
-                <Text style={styles.gain}>▲ +{record.gainKg} kg</Text>
+                <Text style={styles.gain}>▲ +{formatWeight(record.gainKg, data.unit)}</Text>
               </View>
             ))
           )}

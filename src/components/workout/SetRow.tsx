@@ -12,7 +12,7 @@ type Props = {
   values: SetValues;
   /** Valores de esta serie en la última sesión, para mostrarlos debajo como referencia. */
   previous?: SetValues;
-  /** Lo que suma cada + / − del peso (ajuste del perfil). */
+  /** Lo que suma cada + / − del peso, en la unidad de pantalla (ajuste del perfil). */
   weightStep: number;
   saved: boolean;
   onChange: (field: SetField, value: number) => void;
@@ -35,13 +35,14 @@ export function SetRow({
       <Text style={styles.number}>{number}</Text>
 
       {fields.map((spec) => {
+        const stored = values[spec.field];
         const last = previous?.[spec.field];
         return (
           <View key={spec.field} style={styles.field}>
             <Stepper
               label={`${spec.label}, serie ${number}`}
-              value={values[spec.field] ?? 0}
-              onChange={(value) => onChange(spec.field, value)}
+              value={stored === null ? 0 : spec.toDisplay(stored)}
+              onChange={(shown) => onChange(spec.field, spec.fromDisplay(shown))}
               step={spec.field === 'weightKg' ? weightStep : spec.precision}
               min={spec.min}
               max={spec.max}
@@ -51,7 +52,7 @@ export function SetRow({
             />
             {last != null && (
               <Text style={styles.previous}>
-                ant. {last}
+                ant. {spec.toDisplay(last)}
                 {spec.unit ? ` ${spec.unit}` : ''}
               </Text>
             )}

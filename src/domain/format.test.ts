@@ -17,6 +17,7 @@ describe('formatClock', () => {
 describe('formatSet', () => {
   it('peso y repeticiones', () => {
     expect(formatSet({ ...empty, weightKg: 80, reps: 8 })).toBe('80 kg × 8');
+    expect(formatSet({ ...empty, weightKg: 80, reps: 8 }, 'lb')).toBe('176.5 lb × 8');
   });
 
   it('tiempo, distancia o ambos', () => {

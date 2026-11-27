@@ -14,6 +14,7 @@ import { RestBar } from '@/components/workout/RestBar';
 import { SetRow } from '@/components/workout/SetRow';
 import { db } from '@/db/client';
 import { formatClock } from '@/domain/format';
+import { formatWeight, incrementFor } from '@/domain/units';
 import { fieldsFor, isExerciseDone } from '@/domain/workout';
 import { useNow } from '@/hooks/useNow';
 import { useToast } from '@/hooks/useToast';
@@ -69,14 +70,16 @@ export default function TrainScreen() {
   );
   const exercise = plan.exercises[index];
   const sets = drafts[exercise.card.id];
-  const fields = fieldsFor(exercise.card.tracking);
+  const { unit } = plan.settings;
+  const fields = fieldsFor(exercise.card.tracking, unit);
   const isLast = index === plan.exercises.length - 1;
   const elapsed = plan.session ? (now - new Date(plan.session.startedAt).getTime()) / 1000 : 0;
 
   const onToggle = (setIndex: number) => {
     const { isPr } = workout.toggleSet(exercise.card.id, setIndex);
-    const weight = sets[setIndex].values.weightKg;
-    if (isPr) toast.show(`🏆 ¡Nuevo récord! ${weight} kg en ${exercise.card.name}`);
+    const weight = sets[setIndex].values.weightKg ?? 0;
+    if (isPr)
+      toast.show(`🏆 ¡Nuevo récord! ${formatWeight(weight, unit)} en ${exercise.card.name}`);
   };
 
   const onNext = () => {
@@ -144,7 +147,7 @@ export default function TrainScreen() {
           </Pressable>
         </ScrollView>
 
-        <ExerciseSummary exercise={exercise} />
+        <ExerciseSummary exercise={exercise} unit={unit} />
 
         <Card>
           <View style={styles.setsHeader}>
@@ -163,7 +166,7 @@ export default function TrainScreen() {
               fields={fields}
               values={set.values}
               previous={exercise.lastSession[i] ?? exercise.lastSession.at(-1)}
-              weightStep={plan.settings.incrementKg}
+              weightStep={incrementFor(plan.settings.incrementKg, unit)}
               saved={set.savedSetId !== null}
               onChange={(field, value) => workout.changeValue(exercise.card.id, i, field, value)}
               onToggleSaved={() => onToggle(i)}
