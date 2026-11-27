@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
+import { CreateExerciseSheet } from '@/components/CreateExerciseSheet';
 import { ExercisePicker } from '@/components/ExercisePicker';
 import { ExerciseThumb } from '@/components/ExerciseThumb';
 import { Toast } from '@/components/Toast';
@@ -13,17 +14,34 @@ import { ExerciseSummary } from '@/components/workout/ExerciseSummary';
 import { RestBar } from '@/components/workout/RestBar';
 import { SetRow } from '@/components/workout/SetRow';
 import { db } from '@/db/client';
+import { newId } from '@/db/ids';
 import { formatClock } from '@/domain/format';
-import { formatWeight, incrementFor } from '@/domain/units';
+import { formatWeight, incrementFor, isWeightPerDumbbell } from '@/domain/units';
 import { fieldsFor, isExerciseDone } from '@/domain/workout';
 import { useNow } from '@/hooks/useNow';
 import { useToast } from '@/hooks/useToast';
 import { useWorkout } from '@/hooks/useWorkout';
-import { getExerciseCards } from '@/services/catalog';
+import { createExercise, exerciseNameTaken, getExerciseCards } from '@/services/catalog';
 import type { WorkoutPlan } from '@/services/session';
 import { color, font, space } from '@/theme';
 
+/** Cómo se cuenta el peso según el equipo (ver `isWeightPerDumbbell`). */
+const WEIGHT_HINT: Partial<Record<string, string>> = {
+  mancuernas: 'Peso de una mancuerna',
+  barra: 'Peso total, con la barra',
+};
+
 const THUMB_SIZE = 74;
+
+/**
+ * Tiempo de entrenamiento. Va aparte porque cambia cada segundo: así solo se redibuja este
+ * chip y no la pantalla entera (con el selector abierto, eso eran decenas de miniaturas).
+ */
+function SessionClock({ startedAt }: { startedAt: string | null }) {
+  const now = useNow(startedAt !== null);
+  const elapsed = startedAt ? (now - new Date(startedAt).getTime()) / 1000 : 0;
+  return <Chip label={`● ${formatClock(elapsed)}`} />;
+}
 
 /** Registro rápido: series precargadas, + / − y ✓ que guarda la serie y arranca el descanso. */
 export default function TrainScreen() {
@@ -31,10 +49,10 @@ export default function TrainScreen() {
   const workout = useWorkout(chosenDayId);
   const toast = useToast();
   const { state } = workout;
-  const now = useNow(!!state?.sessionId);
   const [pickerOpen, setPickerOpen] = useState(false);
-  // El catálogo no cambia mientras la app está abierta: se lee una sola vez.
-  const catalog = useMemo(() => getExerciseCards(db), []);
+  const [createOpen, setCreateOpen] = useState(false);
+  // Se lee una vez y se vuelve a leer solo al crear un ejercicio propio.
+  const [catalog, setCatalog] = useState(() => getExerciseCards(db));
 
   if (!state) return null;
   const { plan, drafts, currentId } = state;
@@ -48,6 +66,22 @@ export default function TrainScreen() {
         setPickerOpen(false);
         workout.addExercise(exercise.id);
       }}
+      onCreate={() => {
+        setPickerOpen(false);
+        setCreateOpen(true);
+      }}
+    />
+  );
+  const createSheet = (
+    <CreateExerciseSheet
+      visible={createOpen}
+      isNameTaken={(name) => exerciseNameTaken(db, name)}
+      onClose={() => setCreateOpen(false)}
+      onSave={(input) => {
+        const card = createExercise(db, input, newId);
+        setCatalog(getExerciseCards(db));
+        workout.addExercise(card.id);
+      }}
     />
   );
 
@@ -60,6 +94,7 @@ export default function TrainScreen() {
           onFreeWorkout={() => setPickerOpen(true)}
         />
         {picker}
+        {createSheet}
       </>
     );
   }
@@ -73,13 +108,14 @@ export default function TrainScreen() {
   const { unit } = plan.settings;
   const fields = fieldsFor(exercise.card.tracking, unit);
   const isLast = index === plan.exercises.length - 1;
-  const elapsed = plan.session ? (now - new Date(plan.session.startedAt).getTime()) / 1000 : 0;
 
   const onToggle = (setIndex: number) => {
     const { isPr } = workout.toggleSet(exercise.card.id, setIndex);
     const weight = sets[setIndex].values.weightKg ?? 0;
     if (isPr)
-      toast.show(`🏆 ¡Nuevo récord! ${formatWeight(weight, unit)} en ${exercise.card.name}`);
+      toast.show(
+        `🏆 ¡Nuevo récord! ${formatWeight(weight, unit, isWeightPerDumbbell(exercise.card.equipmentId))} en ${exercise.card.name}`,
+      );
   };
 
   const onNext = () => {
@@ -100,7 +136,7 @@ export default function TrainScreen() {
             <Text style={styles.muted}>Entrenando · {plan.day?.name ?? 'Libre'}</Text>
             <Text style={styles.title}>Registro</Text>
           </View>
-          <Chip label={`● ${formatClock(elapsed)}`} />
+          <SessionClock startedAt={plan.session?.startedAt ?? null} />
         </View>
 
         <ScrollView
@@ -159,6 +195,9 @@ export default function TrainScreen() {
             ))}
             <View style={styles.checkColumn} />
           </View>
+          {exercise.card.tracking === 'weight_reps' && WEIGHT_HINT[exercise.card.equipmentId] && (
+            <Text style={styles.weightHint}>{WEIGHT_HINT[exercise.card.equipmentId]}</Text>
+          )}
           {sets.map((set, i) => (
             <SetRow
               key={i}
@@ -170,6 +209,9 @@ export default function TrainScreen() {
               saved={set.savedSetId !== null}
               onChange={(field, value) => workout.changeValue(exercise.card.id, i, field, value)}
               onToggleSaved={() => onToggle(i)}
+              onDelete={
+                sets.length > 1 ? () => workout.deleteDraftSet(exercise.card.id, i) : undefined
+              }
             />
           ))}
           <View style={styles.addSet}>
@@ -201,6 +243,7 @@ export default function TrainScreen() {
       </ScrollView>
       <Toast message={toast.message} />
       {picker}
+      {createSheet}
     </SafeAreaView>
   );
 }
@@ -278,6 +321,7 @@ const styles = StyleSheet.create({
   doneMark: { color: color.bg, fontSize: 11, fontWeight: '900' },
   setsHeader: { flexDirection: 'row', gap: space.sm, paddingBottom: space.xs },
   columnLabel: { color: color.textMuted, fontSize: font.tiny },
+  weightHint: { color: color.textMuted, fontSize: font.tiny },
   numberColumn: { width: 22, textAlign: 'center' },
   checkColumn: { width: 44 },
   addSet: { marginTop: space.gap },

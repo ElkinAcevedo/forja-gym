@@ -4,7 +4,7 @@
  * Solo se ejecuta cuando cambia `CATALOG_VERSION`: la versión cargada se guarda en
  * `PRAGMA user_version`, un número que SQLite reserva para la app.
  */
-import { getTableColumns, sql, type SQL } from 'drizzle-orm';
+import { eq, getTableColumns, inArray, notInArray, sql, type SQL } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import * as schema from '../schema';
@@ -18,7 +18,7 @@ import { DAY_TEMPLATES, PROGRAMS, PROGRESSION_TIPS } from './templates';
 import { LEVEL_STANDARDS, REP_SCHEMES } from './training';
 
 /** Súbelo cada vez que cambien los datos del catálogo para que se recarguen. */
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 6;
 
 /**
  * Columnas no clave de una tabla con el valor que se intentó insertar (`excluded`),
@@ -50,7 +50,18 @@ export function seedCatalog(db: AppDatabase): boolean {
     tx.delete(schema.programTemplateDay).run();
     tx.delete(schema.dayTemplateExercise).run();
     tx.delete(schema.dayTemplate).run();
-    tx.delete(schema.exerciseMuscle).run();
+    // Los músculos de los ejercicios creados por el usuario no son del catálogo: se conservan.
+    tx.delete(schema.exerciseMuscle)
+      .where(
+        inArray(
+          schema.exerciseMuscle.exerciseId,
+          tx
+            .select({ id: schema.exercise.id })
+            .from(schema.exercise)
+            .where(eq(schema.exercise.isCustom, false)),
+        ),
+      )
+      .run();
     tx.delete(schema.levelStandard).run();
     tx.delete(schema.repScheme).run();
 
@@ -70,6 +81,15 @@ export function seedCatalog(db: AppDatabase): boolean {
       MUSCLES.map(({ id, name, view, group }) => ({ id, name, view, muscleGroup: group })),
       schema.muscle.id,
     );
+    // Solo `exercise_muscle` (ya vaciada) apunta a los músculos: se pueden quitar los retirados.
+    tx.delete(schema.muscle)
+      .where(
+        notInArray(
+          schema.muscle.id,
+          MUSCLES.map((m) => m.id),
+        ),
+      )
+      .run();
     upsert(schema.equipment, [...EQUIPMENT], schema.equipment.id);
 
     const exercises = EXERCISE_LIST;
@@ -80,6 +100,7 @@ export function seedCatalog(db: AppDatabase): boolean {
         name: e.name,
         equipmentId: e.equipment,
         isCompound: e.compound,
+        restSeconds: e.rest,
         tracking: e.tracking ?? 'weight_reps',
       })),
       schema.exercise.id,

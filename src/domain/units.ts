@@ -43,9 +43,15 @@ export function incrementFor(incrementKg: number, unit: WeightUnit): number {
   return INCREMENT_OPTIONS[unit][index === -1 ? 1 : index];
 }
 
-/** "82.5 kg" / "176.5 lb" */
-export const formatWeight = (kg: number, unit: WeightUnit) =>
-  `${toDisplayWeight(kg, unit)} ${unit}`;
+/**
+ * Con mancuernas se anota el peso de UNA (así se habla en el gym: "press con 15"). Con barra,
+ * el total con la barra incluida, que es lo estándar para comparar récords.
+ */
+export const isWeightPerDumbbell = (equipmentId: string) => equipmentId === 'mancuernas';
+
+/** "82.5 kg" / "176.5 lb"; con `each`, "15 kg c/u" (peso de cada mancuerna). */
+export const formatWeight = (kg: number, unit: WeightUnit, each = false) =>
+  `${toDisplayWeight(kg, unit)} ${unit}${each ? ' c/u' : ''}`;
 
 /** Volumen total en miles: "18.4 t" en kg, "40.6k lb" en libras. */
 export function formatVolume(kg: number, unit: WeightUnit): string {

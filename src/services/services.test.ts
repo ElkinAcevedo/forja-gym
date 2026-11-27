@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm';
 
+import { seedCatalog } from '@/db/seed';
+import { EXERCISE_LIST } from '@/db/seed/exercises';
 import { ensureStarterData } from '@/db/starter';
 import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testing';
 
-import { getExerciseCards } from './catalog';
+import { createExercise, getExerciseCards } from './catalog';
 import { getActiveRoutine } from './routines';
 import { getRecentRecords, getWeekSummary } from './stats';
 
@@ -36,17 +38,52 @@ describe('servicios de lectura', () => {
       expect(cards.map((c) => c.id)).toEqual(['sentadilla', 'banca']);
       expect(cards[1]).toEqual({
         id: 'banca',
-        name: 'Press de banca',
+        name: 'Press de banca con barra',
         equipmentId: 'barra',
         isCompound: true,
+        restSeconds: 180,
         tracking: 'weight_reps',
         primary: ['pecho'],
-        secondary: ['triceps', 'hombros'],
+        secondary: ['triceps', 'deltoide_anterior'],
       });
     });
 
     it('sin ids devuelve todo el catálogo', () => {
-      expect(getExerciseCards(db)).toHaveLength(20);
+      expect(getExerciseCards(db)).toHaveLength(EXERCISE_LIST.length);
+    });
+  });
+
+  describe('createExercise', () => {
+    const input = {
+      name: '  Remo  Pendlay ',
+      equipmentId: 'barra' as const,
+      primary: ['dorsales' as const],
+    };
+
+    it('crea un ejercicio propio con el nombre limpio y su músculo', () => {
+      const card = createExercise(db, input, () => 'propio1');
+      expect(card).toMatchObject({
+        id: 'propio1',
+        name: 'Remo Pendlay',
+        equipmentId: 'barra',
+        primary: ['dorsales'],
+        restSeconds: 90,
+      });
+    });
+
+    it('rechaza nombres repetidos (sin distinguir mayúsculas), vacíos y sin músculo', () => {
+      expect(() =>
+        createExercise(db, { ...input, name: 'press de BANCA con barra' }, () => 'x'),
+      ).toThrow();
+      expect(() => createExercise(db, { ...input, name: '   ' }, () => 'x')).toThrow();
+      expect(() => createExercise(db, { ...input, primary: [] }, () => 'x')).toThrow();
+    });
+
+    it('recargar el catálogo conserva sus músculos', () => {
+      createExercise(db, input, () => 'propio1');
+      db.run(sql`PRAGMA user_version = 0`);
+      seedCatalog(db);
+      expect(getExerciseCards(db, ['propio1'])[0].primary).toEqual(['dorsales']);
     });
   });
 

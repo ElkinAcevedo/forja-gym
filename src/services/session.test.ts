@@ -3,7 +3,14 @@ import { createTestDatabase, sequentialIds, type TestDatabase } from '@/db/testi
 import type { SetValues } from '@/domain/workout';
 
 import { clearRestPreference, getRestPreference, saveRestPreference } from './preferences';
-import { deleteSet, finishSession, getWorkoutExercise, getWorkoutPlan, saveSet } from './session';
+import {
+  deleteSet,
+  finishSession,
+  getWorkoutExercise,
+  getWorkoutPlan,
+  removeSet,
+  saveSet,
+} from './session';
 
 const MONDAY = new Date('2026-11-23T17:00:00.000Z'); // lunes: Push
 const THURSDAY = new Date('2026-11-26T17:00:00.000Z'); // jueves: descanso
@@ -55,9 +62,9 @@ describe('servicio de sesión', () => {
     ]);
     expect(plan.exercises[0].scheme).toEqual({ sets: 4, repMin: 6, repMax: 8 });
     expect(plan.settings).toEqual({ autofill: true, incrementKg: 2.5, unit: 'kg' });
-    // Banca es compuesto: 90 s del perfil + 60 s. Las elevaciones laterales, 90 s.
-    expect(plan.exercises[0].restSeconds).toBe(150);
-    expect(plan.exercises[3].restSeconds).toBe(90);
+    // El descanso recomendado de cada ejercicio viene del catálogo.
+    expect(plan.exercises[0].restSeconds).toBe(180); // banca
+    expect(plan.exercises[3].restSeconds).toBe(60); // elevaciones laterales
   });
 
   it('un día de descanso no propone ejercicios, pero deja elegir otro día de la rutina', () => {
@@ -107,6 +114,18 @@ describe('servicio de sesión', () => {
     expect(getWorkoutPlan(db, MONDAY).exercises[0].savedSets).toEqual([]);
   });
 
+  it('eliminar una serie sube una posición las siguientes', () => {
+    const { sessionId } = logBench(kg(80, 8), MONDAY, 0);
+    logBench(kg(82.5, 7), MONDAY, 1);
+    logBench(kg(85, 6), MONDAY, 2);
+    removeSet(db, sessionId, 'banca', 1, MONDAY);
+    const saved = getWorkoutPlan(db, MONDAY).exercises[0].savedSets;
+    expect(saved.map((s) => [s.position, s.values.weightKg])).toEqual([
+      [0, 80],
+      [1, 85],
+    ]);
+  });
+
   it('una sesión olvidada abierta más de 12 horas se cierra sola', () => {
     logBench(kg(80, 8), MONDAY);
     const nextDay = new Date(MONDAY.getTime() + 20 * 60 * 60 * 1000);
@@ -124,8 +143,8 @@ describe('servicio de sesión', () => {
     saveRestPreference(db, 'banca', 15, MONDAY);
     clearRestPreference(db, 'banca', MONDAY);
     const [bench] = getWorkoutPlan(db, MONDAY).exercises;
-    expect(bench.restSeconds).toBe(150);
-    expect(bench.autoRestSeconds).toBe(150);
+    expect(bench.restSeconds).toBe(180);
+    expect(bench.autoRestSeconds).toBe(180);
 
     saveRestPreference(db, 'banca', 120, MONDAY); // se puede volver a elegir después
     expect(getWorkoutPlan(db, MONDAY).exercises[0].restSeconds).toBe(120);
@@ -137,7 +156,7 @@ describe('servicio de sesión', () => {
 
     const bench = getWorkoutExercise(db, 'banca', null);
     expect(bench.lastSession).toEqual([kg(80, 8)]);
-    expect(bench.restSeconds).toBe(150);
+    expect(bench.restSeconds).toBe(180);
     expect(bench.savedSets).toEqual([]);
   });
 

@@ -34,6 +34,16 @@ export const exercise = sqliteTable('exercise', {
     .references(() => equipment.id),
   isCompound: integer('is_compound', { mode: 'boolean' }).notNull(),
   tracking: text('tracking', { enum: TRACKING_MODES }).notNull().default('weight_reps'),
+  /**
+   * Descanso recomendado entre series. Sin CHECK a propósito: añadirlo obliga a recrear la
+   * tabla en SQLite; los valores los valida la prueba de la semilla.
+   */
+  restSeconds: integer('rest_seconds').notNull().default(90),
+  /**
+   * Creado por el usuario ("Crear ejercicio"), no viene con la app. La semilla no toca sus
+   * músculos al recargar el catálogo.
+   */
+  isCustom: integer('is_custom', { mode: 'boolean' }).notNull().default(false),
   /** Ilustración del ejercicio; si falta, se dibuja el mapa muscular. */
   image: text('image'),
 });

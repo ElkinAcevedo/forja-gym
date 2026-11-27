@@ -9,6 +9,7 @@ import {
   BODY_VIEWBOX,
   MIRROR_TRANSFORM,
   MUSCLE_DRAWINGS,
+  muscleLayers,
   type MuscleDrawing,
 } from './bodyShapes';
 
@@ -82,29 +83,43 @@ export function BodyMap({
         <Path d={BODY_OUTLINE.rightHalf} transform={MIRROR_TRANSFORM} />
       </G>
 
-      {muscles.map(([id, drawing]) => {
-        const isSelected = selected === id;
-        return (
+      {/* Sin selector, los músculos del mismo color van juntos: muchas menos figuras SVG. */}
+      {!onPressMuscle &&
+        muscleLayers(view, fillOf).map((layer) => (
           <G
-            key={id}
-            fill={fillOf(id)}
-            stroke={isSelected ? color.text : color.bodyBase}
-            strokeWidth={isSelected ? SELECTED_WIDTH : SEPARATOR_WIDTH}
-            onPress={onPressMuscle ? () => onPressMuscle(id) : undefined}
-            accessible={!!onPressMuscle}
-            accessibilityRole={onPressMuscle ? 'button' : undefined}
-            accessibilityLabel={onPressMuscle ? muscleName(id) : undefined}
-            accessibilityState={onPressMuscle ? { selected: isSelected } : undefined}>
-            {drawing.paths.map((d) => (
-              <Path key={d} d={d} />
-            ))}
-            {drawing.mirrored &&
-              drawing.paths.map((d) => (
-                <Path key={`mirror-${d}`} d={d} transform={MIRROR_TRANSFORM} />
-              ))}
+            key={layer.fill}
+            fill={layer.fill}
+            stroke={color.bodyBase}
+            strokeWidth={SEPARATOR_WIDTH}>
+            <Path d={layer.d} />
+            {layer.mirroredD && <Path d={layer.mirroredD} transform={MIRROR_TRANSFORM} />}
           </G>
-        );
-      })}
+        ))}
+
+      {onPressMuscle &&
+        muscles.map(([id, drawing]) => {
+          const isSelected = selected === id;
+          return (
+            <G
+              key={id}
+              fill={fillOf(id)}
+              stroke={isSelected ? color.text : color.bodyBase}
+              strokeWidth={isSelected ? SELECTED_WIDTH : SEPARATOR_WIDTH}
+              onPress={() => onPressMuscle(id)}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={muscleName(id)}
+              accessibilityState={{ selected: isSelected }}>
+              {drawing.paths.map((d) => (
+                <Path key={d} d={d} />
+              ))}
+              {drawing.mirrored &&
+                drawing.paths.map((d) => (
+                  <Path key={`mirror-${d}`} d={d} transform={MIRROR_TRANSFORM} />
+                ))}
+            </G>
+          );
+        })}
     </Svg>
   );
 }

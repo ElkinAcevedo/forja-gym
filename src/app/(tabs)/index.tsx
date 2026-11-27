@@ -13,7 +13,7 @@ import { WeekStrip } from '@/components/WeekStrip';
 import { db } from '@/db/client';
 import { formatLongDate } from '@/domain/dates';
 import { formatSet } from '@/domain/format';
-import { formatVolume, formatWeight } from '@/domain/units';
+import { formatVolume, formatWeight, isWeightPerDumbbell } from '@/domain/units';
 import { useFocusData } from '@/hooks/useFocusData';
 import { getHomeData, type HomeData } from '@/services/home';
 import { color, font, space } from '@/theme';
@@ -93,10 +93,18 @@ export default function HomeScreen() {
                         distanceM: null,
                       },
                       data.unit,
+                      isWeightPerDumbbell(record.exercise.equipmentId),
                     )}
                   </Text>
                 </View>
-                <Text style={styles.gain}>▲ +{formatWeight(record.gainKg, data.unit)}</Text>
+                <Text style={styles.gain}>
+                  ▲ +
+                  {formatWeight(
+                    record.gainKg,
+                    data.unit,
+                    isWeightPerDumbbell(record.exercise.equipmentId),
+                  )}
+                </Text>
               </View>
             ))
           )}

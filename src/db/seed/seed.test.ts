@@ -6,7 +6,11 @@ import { sql } from 'drizzle-orm';
 
 import * as schema from '../schema';
 import { createTestDatabase, type TestDatabase } from '../testing';
+import { LIMITS } from '../../domain/limits';
+import { EQUIPMENT } from './equipment';
+import { EXERCISE_LIST } from './exercises';
 import { CATALOG_VERSION, seedCatalog } from './index';
+import { MUSCLES } from './muscles';
 
 describe('seedCatalog', () => {
   let db: TestDatabase;
@@ -20,9 +24,9 @@ describe('seedCatalog', () => {
   it('carga todo el catálogo del mockup', () => {
     expect(seedCatalog(db)).toBe(true);
 
-    expect(count('muscle')).toBe(14);
-    expect(count('equipment')).toBe(5);
-    expect(count('exercise')).toBe(20);
+    expect(count('muscle')).toBe(19);
+    expect(count('equipment')).toBe(6);
+    expect(count('exercise')).toBe(EXERCISE_LIST.length);
     expect(count('rep_scheme')).toBe(6);
     expect(count('level_standard')).toBe(25); // 5 ejercicios × 5 niveles
     expect(count('day_template')).toBe(12);
@@ -42,9 +46,35 @@ describe('seedCatalog', () => {
       expect.arrayContaining([
         { muscleId: 'pecho', role: 'primary' },
         { muscleId: 'triceps', role: 'secondary' },
-        { muscleId: 'hombros', role: 'secondary' },
+        { muscleId: 'deltoide_anterior', role: 'secondary' },
       ]),
     );
+  });
+
+  // Evita huecos como los que salieron en el gym: cada músculo con al menos 3 ejercicios
+  // propios (donde es el principal) y cada equipo con ejercicios.
+  it.each(MUSCLES.map((m) => m.id))('%s tiene al menos 3 ejercicios propios', (muscle) => {
+    expect(EXERCISE_LIST.filter((e) => e.primary.includes(muscle)).length).toBeGreaterThanOrEqual(
+      3,
+    );
+  });
+
+  it.each(EQUIPMENT.map((e) => e.id))('hay ejercicios con %s', (equipment) => {
+    expect(EXERCISE_LIST.some((e) => e.equipment === equipment)).toBe(true);
+  });
+
+  it('no repite nombres de ejercicio', () => {
+    const names = EXERCISE_LIST.map((e) => e.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('cada ejercicio trae un descanso válido', () => {
+    const { min, max, precision } = LIMITS.restSeconds;
+    for (const e of EXERCISE_LIST) {
+      expect(e.rest).toBeGreaterThanOrEqual(min);
+      expect(e.rest).toBeLessThanOrEqual(max);
+      expect(e.rest % precision).toBe(0);
+    }
   });
 
   it('no vuelve a cargar si la versión no cambió', () => {
@@ -53,6 +83,15 @@ describe('seedCatalog', () => {
     expect(db.get<{ user_version: number }>(sql`PRAGMA user_version`).user_version).toBe(
       CATALOG_VERSION,
     );
+  });
+
+  it('al recargar el catálogo quita los músculos retirados', () => {
+    seedCatalog(db);
+    db.run(sql`INSERT INTO muscle (id, name, view, muscle_group)
+               VALUES ('hombros', 'Hombros', 'front', 'Hombros')`);
+    db.run(sql`PRAGMA user_version = 0`);
+    seedCatalog(db);
+    expect(count('muscle')).toBe(19);
   });
 
   it('al recargar el catálogo conserva los entrenamientos del usuario', () => {
@@ -66,6 +105,6 @@ describe('seedCatalog', () => {
     expect(seedCatalog(db)).toBe(true);
 
     expect(count('set_log')).toBe(1);
-    expect(count('exercise')).toBe(20);
+    expect(count('exercise')).toBe(EXERCISE_LIST.length);
   });
 });

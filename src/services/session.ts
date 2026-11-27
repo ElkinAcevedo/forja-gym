@@ -5,14 +5,13 @@
  * Cada serie se guarda en el momento en que se confirma con ✓: si la app se cierra a mitad
  * del entrenamiento no se pierde nada y la sesión se retoma al volver.
  */
-import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 
 import * as schema from '@/db/schema';
 import type { AppDatabase, IdGenerator } from '@/db/types';
 import { weekdayIndex } from '@/domain/dates';
 import type { WeightUnit } from '@/domain/enums';
 import { isNewRecord } from '@/domain/records';
-import { restSecondsFor } from '@/domain/rest';
 import { suggestedScheme, type RepScheme } from '@/domain/training';
 import { isSessionStale, type SetValues } from '@/domain/workout';
 
@@ -137,12 +136,8 @@ function buildWorkoutExercise(
   return {
     card,
     scheme: suggestedScheme(rules, profile.goal, card.isCompound),
-    restSeconds: restSecondsFor(
-      profile.restSeconds,
-      card.isCompound,
-      restPreferences.get(card.id) ?? null,
-    ),
-    autoRestSeconds: restSecondsFor(profile.restSeconds, card.isCompound, null),
+    restSeconds: restPreferences.get(card.id) ?? card.restSeconds,
+    autoRestSeconds: card.restSeconds,
     lastSession: getLastSessionSets(db, card.id, sessionId),
     bestWeightKg: getBestWeight(db, card.id),
     savedSets: [...savedRows]
@@ -268,6 +263,36 @@ export function deleteSet(db: AppDatabase, setId: string, now: Date) {
     .set({ deletedAt: at, updatedAt: at })
     .where(eq(schema.setLog.id, setId))
     .run();
+}
+
+/**
+ * Elimina la serie `position` de un ejercicio en la sesión (si estaba guardada) y sube una
+ * posición las siguientes: las posiciones casan cada serie con la de la última sesión.
+ */
+export function removeSet(
+  db: AppDatabase,
+  sessionId: string,
+  exerciseId: string,
+  position: number,
+  now: Date,
+) {
+  const at = now.toISOString();
+  const { setLog } = schema;
+  const sameExercise = and(
+    eq(setLog.sessionId, sessionId),
+    eq(setLog.exerciseId, exerciseId),
+    isNull(setLog.deletedAt),
+  );
+  db.transaction((tx) => {
+    tx.update(setLog)
+      .set({ deletedAt: at, updatedAt: at })
+      .where(and(sameExercise, eq(setLog.position, position)))
+      .run();
+    tx.update(setLog)
+      .set({ position: sql`${setLog.position} - 1`, updatedAt: at })
+      .where(and(sameExercise, gt(setLog.position, position)))
+      .run();
+  });
 }
 
 /** Da por terminado el entrenamiento. */

@@ -52,15 +52,16 @@ export function getHomeData(db: AppDatabase, now: Date): HomeData {
   if (todayPlan?.name) {
     const exercises = getExerciseCards(db, todayPlan.exerciseIds);
     const rules = getRepSchemes(db);
-    const totalSets = exercises.reduce(
-      (sum, e) => sum + suggestedScheme(rules, profile.goal, e.isCompound).sets,
-      0,
-    );
     today = {
       name: todayPlan.name,
       exercises,
       muscles: combineMuscles(exercises),
-      estimatedMinutes: estimateWorkoutMinutes(totalSets, profile.restSeconds),
+      estimatedMinutes: estimateWorkoutMinutes(
+        exercises.map((e) => ({
+          sets: suggestedScheme(rules, profile.goal, e.isCompound).sets,
+          restSeconds: e.restSeconds,
+        })),
+      ),
     };
   }
 

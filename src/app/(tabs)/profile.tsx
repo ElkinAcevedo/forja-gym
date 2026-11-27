@@ -7,9 +7,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { Segmented } from '@/components/Segmented';
 import { SettingRow } from '@/components/SettingRow';
 import { db } from '@/db/client';
-import { REST_OPTIONS_S, type TrainingGoal, type WeightUnit } from '@/domain/enums';
-import { formatClock } from '@/domain/format';
-import { COMPOUND_EXTRA_REST_S } from '@/domain/rest';
+import type { TrainingGoal, WeightUnit } from '@/domain/enums';
 import { formatScheme, suggestedScheme } from '@/domain/training';
 import { INCREMENT_OPTIONS } from '@/domain/units';
 import { useFocusData } from '@/hooks/useFocusData';
@@ -108,19 +106,6 @@ export default function ProfileScreen() {
               }))}
               value={profile.incrementKg}
               onChange={(value) => save({ incrementKg: value })}
-            />
-          </SettingRow>
-
-          <SettingRow
-            icon={SETTING_ICONS.rest}
-            title="Descanso entre series"
-            description={`Compuestos: +${COMPOUND_EXTRA_REST_S / 60} min. Se ajusta en cada ejercicio`}
-            stacked>
-            <Segmented
-              label="Descanso entre series"
-              options={REST_OPTIONS_S.map((s) => ({ value: s, label: formatClock(s) }))}
-              value={profile.restSeconds}
-              onChange={(value) => save({ restSeconds: value })}
             />
           </SettingRow>
 

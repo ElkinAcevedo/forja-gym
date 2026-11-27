@@ -4,7 +4,7 @@ import { EQUIPMENT } from '@/db/seed/equipment';
 import type { WeightUnit } from '@/domain/enums';
 import { formatSet } from '@/domain/format';
 import { formatScheme } from '@/domain/training';
-import { formatWeight } from '@/domain/units';
+import { formatWeight, isWeightPerDumbbell } from '@/domain/units';
 import type { WorkoutExercise } from '@/services/session';
 import { color, font, space } from '@/theme';
 
@@ -31,6 +31,7 @@ export function ExerciseSummary({
   const { card } = exercise;
   const last = topSet(exercise);
   const equipment = EQUIPMENT.find((e) => e.id === card.equipmentId)?.name ?? '';
+  const each = isWeightPerDumbbell(card.equipmentId);
 
   return (
     <Card style={styles.card}>
@@ -48,10 +49,12 @@ export function ExerciseSummary({
         </View>
       </View>
       <View style={styles.stats}>
-        <StatTile label="Última vez" value={last ? formatSet(last, unit) : '—'} compact />
+        <StatTile label="Última vez" value={last ? formatSet(last, unit, each) : '—'} compact />
         <StatTile
           label="Récord"
-          value={exercise.bestWeightKg !== null ? formatWeight(exercise.bestWeightKg, unit) : '—'}
+          value={
+            exercise.bestWeightKg !== null ? formatWeight(exercise.bestWeightKg, unit, each) : '—'
+          }
           highlight={exercise.bestWeightKg !== null}
           compact
         />
