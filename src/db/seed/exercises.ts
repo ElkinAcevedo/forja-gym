@@ -119,6 +119,7 @@ export const EXERCISES = [
   { id: 'gemelos', name: 'Elevación de gemelos de pie', equipment: 'maquina', compound: false, rest: 60, primary: ['gemelos'], secondary: [] },
   { id: 'gemelossentado', name: 'Elevación de gemelos sentado', equipment: 'maquina', compound: false, rest: 60, primary: ['gemelos'], secondary: [] },
   { id: 'gemelosprensa', name: 'Gemelos en prensa', equipment: 'maquina', compound: false, rest: 60, primary: ['gemelos'], secondary: [] },
+  { id: 'gemeloshack', name: 'Elevación de gemelos en hack', equipment: 'maquina', compound: false, rest: 60, primary: ['gemelos'], secondary: [] },
   { id: 'gemelossmith', name: 'Elevación de gemelos en Smith', equipment: 'smith', compound: false, rest: 60, primary: ['gemelos'], secondary: [] },
   // Core
   { id: 'crunch', name: 'Crunch en polea', equipment: 'polea', compound: false, rest: 60, primary: ['abs'], secondary: ['oblicuos'] },

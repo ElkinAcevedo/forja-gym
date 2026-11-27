@@ -1,6 +1,8 @@
-/** Filtro del selector de ejercicios: por músculo (tocado en el mapa) y por equipo. */
+/** Filtro del selector de ejercicios: texto buscado, músculo (tocado en el mapa) y equipo. */
 
 export type ExerciseFilter = {
+  /** Texto del buscador; vacío = sin buscar. */
+  query: string;
   /** Músculo tocado en el mapa; nulo = todos. */
   muscle: string | null;
   /** Equipo elegido; nulo = todos. */
@@ -13,7 +15,28 @@ type Filterable = {
   equipmentId: string;
 };
 
-export const NO_FILTER: ExerciseFilter = { muscle: null, equipment: null };
+export const NO_FILTER: ExerciseFilter = { query: '', muscle: null, equipment: null };
+
+/** Minúsculas, sin tildes y sin espacios sobrantes: "Bíceps  " → "biceps". */
+export const normalizeSearch = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Si el texto buscado aparece en `text`: cada palabra en cualquier orden ("remo polea" encuentra
+ * "Remo cerrado en polea") o todo junto sin espacios ("pull over" encuentra "pullover").
+ */
+export function matchesSearch(text: string, query: string): boolean {
+  const q = normalizeSearch(query);
+  if (!q) return true;
+  const t = normalizeSearch(text);
+  if (q.split(' ').every((word) => t.includes(word))) return true;
+  return t.replaceAll(' ', '').includes(q.replaceAll(' ', ''));
+}
 
 /**
  * Ejercicios que cumplen el filtro, separados: `main` los que trabajan el músculo como
@@ -22,9 +45,13 @@ export const NO_FILTER: ExerciseFilter = { muscle: null, equipment: null };
  */
 export function filterExercises<T extends Filterable>(
   exercises: readonly T[],
-  { muscle, equipment }: ExerciseFilter,
+  { query, muscle, equipment }: ExerciseFilter,
+  /** Texto en el que se busca cada ejercicio (nombre, músculos, sinónimos…). */
+  searchTextOf: (exercise: T) => string,
 ): { main: T[]; also: T[] } {
-  const byEquipment = exercises.filter((e) => !equipment || e.equipmentId === equipment);
+  const byEquipment = exercises.filter(
+    (e) => (!equipment || e.equipmentId === equipment) && matchesSearch(searchTextOf(e), query),
+  );
   if (!muscle) return { main: byEquipment, also: [] };
   return {
     main: byEquipment.filter((e) => e.primary.includes(muscle)),

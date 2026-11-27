@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { EQUIPMENT, type EquipmentId } from '@/db/seed/equipment';
 import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
 import { cleanExerciseName, EXERCISE_NAME_MAX, type NewExercise } from '@/services/catalog';
-import { color, font, radius, size, space } from '@/theme';
+import { color, font, space } from '@/theme';
 
 import { BodyMap } from './body/BodyMap';
 import { BODY_VIEWBOX } from './body/bodyShapes';
@@ -12,6 +12,7 @@ import { Button } from './Button';
 import { Card } from './Card';
 import { Chip } from './Chip';
 import { Sheet } from './Sheet';
+import { TextField } from './TextField';
 
 type Props = {
   visible: boolean;
@@ -58,15 +59,13 @@ export function CreateExerciseSheet({ visible, isNameTaken, onSave, onClose }: P
   return (
     <Sheet visible={visible} title="Crear ejercicio" onClose={close}>
       <Text style={styles.label}>Nombre</Text>
-      <TextInput
+      <TextField
         accessibilityLabel="Nombre del ejercicio"
         value={name}
         onChangeText={setName}
         placeholder="Ej.: Remo Pendlay"
-        placeholderTextColor={color.textMuted}
         maxLength={EXERCISE_NAME_MAX}
         autoCapitalize="sentences"
-        style={styles.input}
       />
       {taken && <Text style={styles.hint}>Ya existe un ejercicio con ese nombre.</Text>}
 
@@ -111,16 +110,6 @@ export function CreateExerciseSheet({ visible, isNameTaken, onSave, onClose }: P
 
 const styles = StyleSheet.create({
   label: { color: color.textMuted, fontSize: font.label, fontWeight: '700' },
-  input: {
-    height: size.control,
-    paddingHorizontal: space.md,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: color.line,
-    backgroundColor: color.surface2,
-    color: color.text,
-    fontSize: font.body,
-  },
   hint: { color: color.textMuted, fontSize: font.caption },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   mapCard: { gap: space.sm, padding: space.gap },

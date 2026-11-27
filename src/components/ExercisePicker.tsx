@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 
 import { EQUIPMENT, type EquipmentId } from '@/db/seed/equipment';
 import { MUSCLES, type MuscleId } from '@/db/seed/muscles';
+import { exerciseSearchText } from '@/db/seed/searchAliases';
 import { filterExercises, NO_FILTER, type ExerciseFilter } from '@/domain/exerciseFilter';
 import type { ExerciseCard } from '@/services/catalog';
 import { color, font, radius, space } from '@/theme';
@@ -14,6 +15,7 @@ import { Card } from './Card';
 import { Chip } from './Chip';
 import { ExerciseThumb } from './ExerciseThumb';
 import { Sheet } from './Sheet';
+import { TextField } from './TextField';
 
 const COLUMNS = 3;
 
@@ -30,8 +32,8 @@ type Props = {
 const muscleName = (id: MuscleId) => MUSCLES.find((m) => m.id === id)?.name ?? id;
 
 /**
- * Selector de ejercicio por imagen: se toca un músculo en el mapa y se filtra por equipo;
- * cada ejercicio se elige por su miniatura.
+ * Selector de ejercicio: se busca por texto (con sinónimos de gym) o se toca un músculo en el
+ * mapa, y se filtra por equipo; cada ejercicio se elige por su miniatura.
  */
 export function ExercisePicker({ visible, exercises, onPick, onCreate, onClose }: Props) {
   const [filter, setFilter] = useState<ExerciseFilter>(NO_FILTER);
@@ -40,7 +42,8 @@ export function ExercisePicker({ visible, exercises, onPick, onCreate, onClose }
   // Los dos mapas ocupan todo el ancho de la tarjeta: más grandes, más fáciles de tocar.
   const mapWidth = (width - space.screen * 2 - space.gap * 2 - space.lg) / 2;
   const mapHeight = (mapWidth * BODY_VIEWBOX.height) / BODY_VIEWBOX.width;
-  const results = filterExercises(exercises, filter);
+  const results = filterExercises(exercises, filter, exerciseSearchText);
+  const searching = filter.query.trim().length > 0;
   const [showAlso, setShowAlso] = useState(false);
   const muscle = filter.muscle as MuscleId | null;
 
@@ -80,27 +83,38 @@ export function ExercisePicker({ visible, exercises, onPick, onCreate, onClose }
 
   return (
     <Sheet visible={visible} title="Elige ejercicio" onClose={onClose}>
-      <Text style={styles.muted}>Toca el músculo que quieres trabajar</Text>
-      <Card style={styles.mapCard}>
-        <View style={styles.maps}>
-          {(['front', 'back'] as const).map((view) => (
-            <BodyMap
-              key={view}
-              view={view}
-              height={mapHeight}
-              primary={muscle ? [muscle] : []}
-              selected={muscle}
-              onPressMuscle={toggleMuscle}
-            />
-          ))}
-        </View>
-        {muscle && (
-          <View style={styles.selected}>
-            <Chip label={muscleName(muscle)} variant="selected" />
-            <Chip label="Quitar ✕" onPress={() => toggleMuscle(muscle)} />
+      <TextField
+        accessibilityLabel="Buscar ejercicio"
+        value={filter.query}
+        onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
+        placeholder="Buscar: remo, pantorrilla, barra guiada…"
+        returnKeyType="search"
+        autoCorrect={false}
+      />
+      {/* Mientras se escribe, el mapa se oculta para que los resultados queden a la vista. */}
+      {!searching && <Text style={styles.muted}>O toca el músculo que quieres trabajar</Text>}
+      {!searching && (
+        <Card style={styles.mapCard}>
+          <View style={styles.maps}>
+            {(['front', 'back'] as const).map((view) => (
+              <BodyMap
+                key={view}
+                view={view}
+                height={mapHeight}
+                primary={muscle ? [muscle] : []}
+                selected={muscle}
+                onPressMuscle={toggleMuscle}
+              />
+            ))}
           </View>
-        )}
-      </Card>
+          {muscle && (
+            <View style={styles.selected}>
+              <Chip label={muscleName(muscle)} variant="selected" />
+              <Chip label="Quitar ✕" onPress={() => toggleMuscle(muscle)} />
+            </View>
+          )}
+        </Card>
+      )}
 
       <ScrollView
         horizontal
