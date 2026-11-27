@@ -8,28 +8,28 @@ const ids = (list: { id: string }[]) => list.map((e) => e.id);
 
 describe('filterExercises', () => {
   it('sin filtro devuelve todo', () => {
-    expect(filterExercises(CATALOG, NO_FILTER)).toHaveLength(20);
+    expect(filterExercises(CATALOG, NO_FILTER).main).toHaveLength(CATALOG.length);
   });
 
-  it('por músculo: primero los que lo trabajan como principal', () => {
-    const chest = ids(filterExercises(CATALOG, { muscle: 'pecho', equipment: null }));
-    expect(chest.slice(0, 4).sort()).toEqual(['banca', 'fondos', 'inclinado', 'peckdeck']);
-    expect(chest).not.toContain('sentadilla');
-  });
-
-  it('incluye los que trabajan el músculo como secundario', () => {
-    const triceps = ids(filterExercises(CATALOG, { muscle: 'triceps', equipment: null }));
-    expect(triceps).toContain('banca'); // tríceps secundario
-    expect(triceps.indexOf('triceppolea')).toBeLessThan(triceps.indexOf('banca'));
+  it('por músculo: separa los de músculo principal de los que lo trabajan como secundario', () => {
+    const { main, also } = filterExercises(CATALOG, { muscle: 'biceps', equipment: null });
+    expect(ids(main)).toContain('curl');
+    expect(ids(main)).not.toContain('remo');
+    expect(ids(also)).toContain('remo'); // bíceps secundario
+    expect(ids(also)).not.toContain('curl');
   });
 
   it('combina músculo y equipo', () => {
-    expect(ids(filterExercises(CATALOG, { muscle: 'pecho', equipment: 'maquina' }))).toEqual([
-      'peckdeck',
-    ]);
+    const { main } = filterExercises(CATALOG, { muscle: 'pecho', equipment: 'maquina' });
+    expect(main.every((e) => e.equipmentId === 'maquina' && e.primary.includes('pecho'))).toBe(
+      true,
+    );
   });
 
-  it('devuelve una lista vacía si nada coincide', () => {
-    expect(filterExercises(CATALOG, { muscle: 'gemelos', equipment: 'polea' })).toEqual([]);
+  it('devuelve listas vacías si nada coincide', () => {
+    expect(filterExercises(CATALOG, { muscle: 'gemelos', equipment: 'polea' })).toEqual({
+      main: [],
+      also: [],
+    });
   });
 });

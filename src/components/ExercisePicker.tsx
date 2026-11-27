@@ -46,16 +46,42 @@ export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
   const mapWidth = (width - space.screen * 2 - space.gap * 2 - space.lg) / 2;
   const mapHeight = (mapWidth * BODY_VIEWBOX.height) / BODY_VIEWBOX.width;
   const results = filterExercises(exercises, filter);
+  const [showAlso, setShowAlso] = useState(false);
   const muscle = filter.muscle as MuscleId | null;
 
-  const toggleMuscle = (id: MuscleId) =>
+  const toggleMuscle = (id: MuscleId) => {
+    setShowAlso(false);
     setFilter((f) => ({ ...f, muscle: f.muscle === id ? null : id }));
+  };
   const setEquipment = (equipment: EquipmentId | null) => setFilter((f) => ({ ...f, equipment }));
 
   const pick = (exercise: ExerciseCard) => {
     setFilter(NO_FILTER);
     onPick(exercise);
   };
+
+  const grid = (list: readonly ExerciseCard[]) => (
+    <View style={styles.grid}>
+      {list.map((e) => (
+        <Pressable
+          key={e.id}
+          onPress={() => pick(e)}
+          accessibilityRole="button"
+          accessibilityLabel={`Añadir ${e.name}`}
+          style={[styles.item, { width: thumbSize }]}>
+          <ExerciseThumb
+            primary={e.primary}
+            secondary={e.secondary}
+            equipment={e.equipmentId}
+            size={thumbSize}
+          />
+          <Text style={styles.itemName} numberOfLines={2}>
+            {e.name}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -117,31 +143,26 @@ export function ExercisePicker({ visible, exercises, onPick, onClose }: Props) {
               ))}
             </ScrollView>
 
-            {results.length === 0 ? (
+            {results.main.length === 0 && results.also.length === 0 ? (
               <Text style={[styles.muted, styles.empty]}>
                 Ningún ejercicio trabaja ese músculo con ese equipo.
               </Text>
             ) : (
-              <View style={styles.grid}>
-                {results.map((e) => (
-                  <Pressable
-                    key={e.id}
-                    onPress={() => pick(e)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Añadir ${e.name}`}
-                    style={[styles.item, { width: thumbSize }]}>
-                    <ExerciseThumb
-                      primary={e.primary}
-                      secondary={e.secondary}
-                      equipment={e.equipmentId}
-                      size={thumbSize}
-                    />
-                    <Text style={styles.itemName} numberOfLines={2}>
-                      {e.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+              grid(results.main)
+            )}
+
+            {results.also.length > 0 && (
+              <>
+                <Pressable
+                  onPress={() => setShowAlso((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showAlso }}
+                  style={styles.alsoHeader}>
+                  <Text style={styles.alsoTitle}>También lo trabajan ({results.also.length})</Text>
+                  <Text style={styles.alsoTitle}>{showAlso ? '▴' : '▾'}</Text>
+                </Pressable>
+                {showAlso && grid(results.also)}
+              </>
             )}
           </ScrollView>
         </SafeAreaView>
@@ -196,4 +217,12 @@ const styles = StyleSheet.create({
   item: { gap: 6, borderRadius: radius.thumb },
   itemName: { color: color.text, fontSize: font.caption, textAlign: 'center' },
   empty: { textAlign: 'center', paddingVertical: space.screen },
+  alsoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: space.md,
+    borderTopWidth: 1,
+    borderTopColor: color.line,
+  },
+  alsoTitle: { color: color.textMuted, fontSize: font.label, fontWeight: '700' },
 });

@@ -16,21 +16,18 @@ type Filterable = {
 export const NO_FILTER: ExerciseFilter = { muscle: null, equipment: null };
 
 /**
- * Ejercicios que cumplen el filtro. Un músculo cuenta si el ejercicio lo trabaja como
- * principal o secundario; los que lo trabajan como principal van primero.
+ * Ejercicios que cumplen el filtro, separados: `main` los que trabajan el músculo como
+ * principal (o todos, sin músculo) y `also` los que solo lo trabajan como secundario, que
+ * se muestran aparte para no tapar los propios del músculo (un remo no es "de bíceps").
  */
 export function filterExercises<T extends Filterable>(
   exercises: readonly T[],
   { muscle, equipment }: ExerciseFilter,
-): T[] {
-  const matches = exercises.filter(
-    (e) =>
-      (!equipment || e.equipmentId === equipment) &&
-      (!muscle || e.primary.includes(muscle) || e.secondary.includes(muscle)),
-  );
-  if (!muscle) return matches;
-  return [
-    ...matches.filter((e) => e.primary.includes(muscle)),
-    ...matches.filter((e) => !e.primary.includes(muscle)),
-  ];
+): { main: T[]; also: T[] } {
+  const byEquipment = exercises.filter((e) => !equipment || e.equipmentId === equipment);
+  if (!muscle) return { main: byEquipment, also: [] };
+  return {
+    main: byEquipment.filter((e) => e.primary.includes(muscle)),
+    also: byEquipment.filter((e) => !e.primary.includes(muscle) && e.secondary.includes(muscle)),
+  };
 }
